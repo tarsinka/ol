@@ -45,29 +45,38 @@
     \maketitle
 
 	\subsection*{General context}
-	The dream of a machine capable of solving mathematical problems is an old dream that takes its
-	roots in the Ancient Greece. The advent of computers in the second part of the XXth century
-	brought back hope to make the dream of the Fathers happen. From the resolution procedure, 
-	exhibited
-	by Davis and Putnam in 1962, to modern SAT-solvers, the idea remains the same, take the
-	problem's formula, convert it in a normal form, namely, the conjunctive normal form, and ask
-	the solver whether or not the resulting formula is satisfiable. However, we know, since the 30s 
-	that, among the problems we formalize, some are decidable and some are not. Among those that are
-	decidable, some belong to the \textbf{NP} class, meaning that they can be solved in polynomial
-	time with a non-deterministic algorithm. Modern SAT-solvers propose, nowaday, a bunch of 
-	heuristics to solve that class of problems.
+	With the advent of computers in the second half of the XXth century, the question whether 
+	machines are able or not to \textit{reason} and to automatically prove mathematical statements 
+	rised from its ashes. In the 60s, a convenient method has been exhibited by Davis and Putnam
+	and has proved itself in term of efficiency so far. It consists in transforming the problem one
+	wants to solve into a conjunctive normal form. This normal form allows the computer to
+	efficiently derive a proof using a couple of logical rules only. Doing that, we are in fact
+	reducing the problem to the SAT problem that is known to be NP complete. This means that,
+	supposing $P\neq NP$, no deterministic algorithm is able to decide the problem in polynomial
+	time. However, the use of heuristics, that is to say, the use of non-deterministic algorithms
+	helps to improve time spent to solve a SAT problem. The conjunctive normal form is, of course,
+	not the only normal form that has been tried to get better performance to automatic reasonning.
+	In the beginning of the 2000s, researchers tried to take advantage of the negative normal form.
+	The singularity of this normal form is that the negation operator is only applied on litterals.
+	According to rewriting rules of boolean algebra, one can derive the negative normal form of a
+	given formula in linear time. However, those proposed algorithms never reached performances
+	comparable to the former algorithms, based on the conjunctive normal form. The following report
+	is about a way to improve the current state of the art of modern SAT solvers in two different
+	ways. On one hand, we look to improve the preprocessing of formulas by applying a new normal
+	form that gets rid of some redundancy, making the formulas smaller. On the other hand, we explore
+	a new set of rules that helps to improve solving performances on some kind of hard problems.
 
 	%What is the report about ? Where does the problem come from ? What is the state of the art in that area ?
 
 	\subsection*{Research problem}
-
-	The research problem we address is an acceleration of some class of hard problems using a
-	weakening of the classical logic. We divided the research in two different aspect. 
-	The first aspect asks whether it is possible or not to improve the preprocessing of the given
-	formula. That is to say, is it possible to apply a specific normal form before the CNF
-	transformation, that would make the formula less redundant ? The second
-	aspect concerns the crafting of an algorithm in a specific proof system of the logic that
-	would solve the class of problems we study faster.
+	In the following, we tackle a generalization of classical logic and we try to take advantage of
+	some of its properties to derive an efficient solving algorithm on some specific class of 
+	problems. The main motivation behind that research is the improvement of performance of
+	automatic reasonning tools and, in particular, of SAT solvers. The goal is to integrate our
+	resulting algorithm in the core of a SAT solver to improve its efficiency on certain class of
+	problems. Although the problem of improving current SAT solvers is not new, we address it in a
+	completely different way by looking deeper in the logical structure to extract interesting
+	properties to our purposes.
 
 	%What specific question(s) have you studied ?
 	%What motivates the question? What are its applications/consequences?
@@ -77,13 +86,17 @@
 	%If not, why did you think that you could bring an original contribution?
 
 	\subsection*{Your contribution}
-
-	The main contribution is the exhibition of an efficient proof-search algorithm based on a
-	proof system of orthologic. We showed that it is correct and that it admits a cubical worst-case
-	complexity. To evaluate the performance, we studied the specific class of problems of circuit
-	equivalence modulo renaming. This happens to be a class that SAT-solvers struggle to solve.
-	However, we showed that we can easely encode into the framework of orthologic and thus, ask
-	a proof for it in our proof system.
+	The contributions of this report are two fold. First, we show that the use of another normal
+	form, before transforming a formula into CNF, can improve the solving performances of SAT 
+	solvers.
+	Second, and this is the main contribution, we propose an efficient proof-search algorithm based 
+	on a proof system of the generalization of classical logic we use. We showed that it is correct 
+	and that it admits a cubical worst-case complexity. To evaluate the performances, we studied the 
+	specific class of problems of circuit
+	equivalence modulo renaming. This happens to be a class of problems SAT solvers struggle to 
+	deal with.
+	However, we showed that we can easely encode it into the framework of our proof system and 
+	thus, ask a proof for it in our proof system.
 
 	%What is your answer to the research problem?
 
@@ -91,11 +104,10 @@
 	%Pay special attention to the description  of the \emph{scientific} approach.
 
 	\subsection*{Arguments supporting its validity}
-
-	Concerning the preprocessing, we mainly tested the procedure on several set of problems more or
-	less hard to solve for SAT-solvers. Concerning the proof-search algorithm, in addition to proofs,
-	we tested our algorithm on a circuit's benchmark, resulting in a great improvement compared to 
-	several SAT-solvers we ran in the same set of problems.
+	The results we have gathered come with benchmarks evaluation on different kind of problems.
+	Concerning the proof-search algorithm we exhibited, we provide, in addition to the benchmarking, 
+	proofs of its correctness and of its worst case complexity. Furthermore, let us note that our
+	results do not rely on any kind of assumptions but rather on work of previous peers on the topic.
 
 	%What is the evidence that your solution is a good solution?
 	%(Experiments? Proofs?)
@@ -103,31 +115,34 @@
 	%Comment on the robustness of your solution: does it rely on assumptions, and if so, to what extent?
 
 	\subsection*{Summary and future work}
-
-	To sum up, we propose a way to improve the current state of the art of SAT-solvers, according to
-	certain class of problems. To achieve this, we exhibit an efficient proof-search algorithm for 
-	problems that can be encoded in the orthologic proof system. Next, the immediate step to do is
-	to implement our algorithm within an existing simple SAT-solver, such as Minisat, and test
-	whether the performances are improved, compared to the original version. The question that
-	follows, concerns the behaviour in the framework of first-order orthologic, when dealing
-	with specific theories.
+	To sum up, we propose two ways to improve the current state of the art of SAT solvers. 
+	On way handles the preprocessing of the formulas while the other handles the proof-search
+	algorithm for certain class of problems. Next, the immediate step to do is
+	to implement our algorithm within an existing simple SAT solver, such as Minisat, and test
+	whether the performances are improved, compared to the original version. There are many questions
+	that stand further. The main one is to study the lifting to first order logic and the way to 
+	adapt our results to specific theories such as bit vectors, lists, arrays etc.
 
 	%What did you contribute to the area?
 	%What comes next?
 	%What is a good \emph{next} step or question?
 
 	\subsection*{Acknowledgements}
+	Before anything else, I'd like to warmly thank Simon and Viktor for having had me in their 
+	laboratory at EPFL and, moreover, for the support they provided me to study that concealed, yet
+	rich topic of orthologics. Many thanks also to Auguste, Samuel and Sankalp for the help and 
+	the nice discussions we had.
 
 	\newpage
     \section{Introduction}
     In this section, we shall introduce the key concepts and the notations that will be mainly used in
     the present report. Few years after the advent of quantum mechanics, a rigorous mathematical 
     foundation has been proposed by von Neumann~\cite{30573279-e8ec-3f1e-b0ba-eaf73275f821} leading, 
-    after some 
-    observations~\cite{2c73be7a-3de4-3824-8e11-49ebe4b183e4}, to a 
+    after some observations~\cite{2c73be7a-3de4-3824-8e11-49ebe4b183e4}, to a 
     non-classical logical structure that would get rid of the distributivity identities. 
     The associated algebra to such a structure is the class of the so
-    called orthomodular lattices, rather than the classical boolean algebras. This gave birth to a new
+    called \textit{orthomodular lattices}, rather than the classical boolean algebras. This gave birth 
+    to a new
     field of logic called the \textit{quantum logic}. The term of \textit{orthologic} has first been 
     introduced
     by Goldblatt~\cite{865e9aad-6de2-3b16-9861-412a9b18e683} to refer to the logic that corresponds to
@@ -174,7 +189,7 @@
 	    An orthogonal complementation (or orthocomplement for short) on a bounded lattice $L$ is a
 	    function $\neg:L\rightarrow L$ that respects, the complement law $\neg a\vee a=\top$ and
 	    $\neg a\wedge a=\bot$, the involution law $\neg\neg a=a$ and, finally, the order-reversing
-	    law $a\leq b\Rightarrow\neg b\leq\neg a$.
+	    law $a\leq b$ implies $\neg b\leq\neg a$.
     \end{definition}
     We now have all the ingredients to properly define the ortholattices. An \textit{ortholattice} is a 
     bounded
@@ -260,16 +275,17 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
     computed transformation ain't be larger than the original formula. The following result exhibits
     the normal form for disjunction, it works dually for conjunction.
     \begin{theorem}[Normal form~\cite{free_lattices_ams}]
-    A term $a=a_1\vee\cdots\vee a_m$, with $m>1$ is in normal form if and only if ;
+    A term that is a litteral is in normal form. A term $t=t_1\vee\cdots\vee t_m$, with $m>1$ is in 
+	    normal form if and only if ;
     \begin{enumerate}
 	    \item
-		    each $a_i$ is in normal form
+		    each $t_i$ is in normal form
 	    \item
-		    if $a_i=\bigwedge a_{ij}$, then for all $j$, $a_{ij}\not\leq a$
+		    if $t_i=\bigwedge t_{ij}$, then for all $j$, $t_{ij}\not\leq t$
 	    \item
-		    the family $(a_1,...,a_n)$ forms an antichain meaning that, if $i\neq j$ then 
-		    $a_i\not\leq a_j$
-    \end{enumerate}
+		    the family $(t_1,...,t_n)$ forms an antichain meaning that, if $i\neq j$ then 
+		    $t_i\not\leq t_j$
+    \end{enumerate} 
     \end{theorem}
     Inductive functions to ensure those properties are explicited in~\cite{10.1007/978-3-031-37709-9_19}
     and are actively used in the proposed algorithm.
@@ -306,10 +322,7 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
     $\phi^R$ is interpreted by $\top\leq\phi$.
 
     \begin{figure}[h]
-	    \begin{framed}
-	    \caption{Proof system for propositional orthologic with axioms}
-		    \label{ol_ps}
-		    
+	    \begin{framed} 
 		    \[
 			    \inferrule*[Right=(Cut)]{\Gamma,\phi^R\\\phi^L,\Delta}{\Gamma,\Delta}
 		    \]
@@ -337,6 +350,8 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 		    \inferrule*[Right=($\neg$-$R$)]
 		    {\phi^L,\Delta}{(\neg\phi)^R,\Delta}
 	    \end{align*}
+		    \caption{Proof system for propositional orthologic with axioms}
+		    \label{ol_ps}
 	    \end{framed}
     \end{figure}
 
@@ -390,7 +405,7 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 		    formulas in $\llbracket k_2,\cdots,k_n\rrbracket$.
     \end{enumerate}
     To the purpose of our experimentations, we isolated the specific shape $\langle 6,3\rangle$ that
-    generates short -- in term of nodes -- and hard enough formulas to do proper measures.
+    generates short -- in term of nodes -- and hard enough formulas to do appropriate measures.
     \subsection{Circuits}
     The second way to do the benchmarks was to take real-life circuits written in the
     And-Inverted Graph (AIG) or ISCAS formats. Those have the advantage to be raw and, hence, not in 
@@ -650,7 +665,7 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 	    Let us enumerate every possible cases to derive the sequent $S$.
 	    \begin{enumerate}
 		    \item
-			    If $S$ is of the form $(s^L,s^R)$, it is an hypothesis and we therefore
+			    If $S$ is of the form $s^L,s^R$, it is an hypothesis and we therefore
 			    apply the \textit{hypothesis} rule. If $S$ is an axiom, we apply the 
 			    \textit{axiom} rule. Since
 			    we supposed that axioms never are hypothesis, those two cases are
@@ -711,7 +726,7 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 	    $s$ from $P$, adds it to $R$ and alters the set of hyperedges $E$ in the following way,
 	    for each hyperedge, it removes $s$ from the source. If, after the operation, the source
 	    of a given hyperedge is empty, it means that the destination has been proven, therefore, it
-	    adds it to $P$. Since $H$ is a finite structure, $P$ is, at some point, decrease until 
+	    adds it to $P$. Since $H$ is a finite structure, $P$ is, at some point, decreasing until 
 	    emptiness. By the end of the loop, $R$ contains every provable sequents of $H$. Hence, the
 	    algorithm returns whether or not $S$, the goal sequent, belongs to $R$.
     \end{proof}
@@ -729,19 +744,18 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 	    Hence, the algorithm builds the hypergraph $H$ in $\mathcal{O}((1+|A|)n^2)$. Let us now 
 	    analyze the complexity of the forward part. The set of proven sequents is of cardinal at 
 	    most the cardinal of $V$. Therefore, it belongs to $\mathcal{O}(n^2)$. Hence the final
-	    complexity.
-	    
+	    complexity. 
     \end{proof}
     There is several optimizations to do and that are done in the OCaml implementation. We can split
     them in two distinct parts. The reduction of the search space and the acceleration of forward
-    exploration of the hypergraph. Let us start with the former. When building the hypergraph backward,
+    exploration of the hypergraph. Let us start with the former. When building the hypergraph backwardly,
     there is no need to add remaining hyperedges once the axiom or hypothese hyperedge has been added.
     Also, we can give the priority to revertible rules that is to say, once we found such, no need
     to add other hyperedges. In the OL sequent calculus, invertible rules are $(\vee$-$L)$ and 
-    $(\wedge$-$R)$. This considerably reduces the size of the hypergraph but is that always
-    useful to do ? In fact, although it accelerates the backward constuction and the search, we could 
-    wonder whether there exists shorter proofs passing 
-    through those erased derivations ? The second optimization is about the exploration of the
+    $(\wedge$-$R)$. This considerably reduces the size of the hypergraph but note that this may not be
+    always the useful thing to do. Indeed, although it accelerates the backward constuction and the 
+    search, we could wonder whether there exists shorter proofs passing 
+    through those erased derivations. The second optimization is about the exploration of the
     hypergraph. To improve that, we mainly use memoization and the average constant time access provided
     by hash tables in average.
     Still, this is not enough to beat the Minisat solver. The main problem lies in the use of the cut
@@ -794,7 +808,7 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
     we have proved $(a,b)$ we would like to deduce every $a\vee c\vdash b$ such that $a\vee c\in SF$.
     To achieve that, we obviously need $(c,b)\in P$ which, with the naive method, forces us to go through
     either $SF$ or $P$ and doing some useless testing. To do this efficiently, we need to ensure that
-    every element we encounter in our datastructure will allow to produce a new proven sequent. The
+    every element we encounter in our data structure will allow to produce a new proven sequent. The
     data structure we introduce takes advantage of the common element the three sequents of the rule
     have in common. In our case, it is the right part, that is to say $b$. First, let us consider 
     $B$ a hash map that binds to every formula $x$ another hash map that itself binds to every 
@@ -803,7 +817,7 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
     will keep in memory that \textit{intersection} between the proven sequents and the subformulas we
     sketched before. We shall call it $D$ ; it is again a hash map that binds every formula $x$ to
     another hash map that itself binds every formula $y$ to a set of formulas that is of the shape
-    $\{y\vee z,z\vee y\in SF\mid\forall z,(z,x)\in P\}$. To make things just said clearer, let us sum 
+    $\{y\vee z,z\vee y\in SF\mid\forall z,(z,x)\in P\}$. To make things we just said clearer, let us sum 
     up the types of each structure.
     \begin{align*}
 	    P&:\mathcal{P}(SF\times SF)\\
@@ -873,10 +887,11 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 	    The algorithm~\ref{alg2} is correct.
     \end{theorem}
     \begin{proof}
-	    Before the first call to the function [add], the maps $A^\diamond$ and $B^\diamond$
+	    Before the first call to the function \textsf{add}, the maps $A^\diamond$ and $B^\diamond$
 	    are built and are not meant to be changed afterwards. The map $C$ (resp. $D$) is empty 
 	    before the
-	    first call to [add]. Each time a call to [add] is done with the sequent $(a,b)$ as argument,
+	    first call to \textsf{add}. Each time a call to \textsf{add} is done with the sequent 
+	    $(a,b)$ as argument,
 	    if the sequent is the goal we seek, then the algorithm stops, returning true. Otherwise,
 	    it first updates $C$ (resp . $D$) by making the union of conjunctive (resp. disjunctive) 
 	    formulas of the form $b\wedge k$ or $k\wedge b$ (resp. $b\vee k$ or $k\vee b$) that may be 
@@ -901,8 +916,8 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 			    since $(a,b)$ and $(x,b)$ are proven, adding $(a\vee x,b)$ is correct.
 			    Finally, $\overleftarrow{P}(a)$ contains every $\phi$ such that $(\phi,a)$
 			    is proven and, since we just added $(a,b)$, adding $(\phi,b)$ is correct.
-			    However, $(\phi,b)$ might have already been proven, the check, to avoid
-			    cycles, is done in the begining of the function [add]. Hence, there is
+			    However, $(\phi,b)$ might have already been proven ; the check, to avoid
+			    cycles, is done in the begining of the function \textsf{add}. Hence, there is
 			    no cycles.
 			    %There is another place where the algorithm manages to add sequent of that
 			    %shape to $P$, this is namely for the cut rule. This takes effect only when
@@ -913,7 +928,8 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 		    \item
 			    for the case $(a,\phi)$, the reasonning is completely dual.
 	    \end{enumerate}
-	    This was the main proof for the [add] procedure. The main procedure calls [add] passing it,
+	    This was the main proof for the \textsf{add} procedure. The main procedure calls \textsf{add}
+	    passing it,
 	    as arguments, the sequents in $\mathcal{A}$, that is to say, the axioms of the given problem.
 	    Hence, the algorithm is correct with respect to the OL proof system.
     \end{proof}
@@ -928,7 +944,7 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 	    formulas
 	    that admit $s$ as subformula. This set is built at the very beginning in linear time with
 	    respect to the size $n$ of the set of subformulas $SF$. Then, each time we make a call to the
-	    function [add] with the sequent $(a,b)$, the algorithm goes through the sets given by 
+	    function \textsf{add} with the sequent $(a,b)$, the algorithm goes through the sets given by 
 	    $A^\wedge(a)$ and $A^\vee(b)$. The cardinal of both of these is bounded by the cardinal of 
 	    $SF$ because a given formula can appear in at most every subformulas of the problem, that
 	    is $n$. Therefore, the complexity for that subset of rules in overall is $\mathcal{O}(n^3)$. 
@@ -936,42 +952,52 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 	    analyze the rules with two premisses that are the right conjunction and the left disjunction.
 	    For the sake of brevity of the proof, let us focus on the disjunction case only, since the 
 	    conjunction case is completely dual. As roughly explained before, we handle it with the
-	    map $D$. At each [add] function call, we first update the $D$ map. To do so,
+	    map $D$. At each \textsf{add} function call, we first update the $D$ map. To do so,
 	    we gather every formulas in $SF$ of the shape $a\vee x$ where $x$ belongs to $SF$. Through 
 	    the map $B^\vee$, we access those in constant time. Therefore, the updating is done in $k$, 
 	    where $k$ is the cardinal of the set of $x$ such that $a\vee x$ or $x\vee a$ are in $SF$ 
 	    and is,
-	    hence, bounded by $n$. In the overall, we therefore lie in $\mathcal{O}(n^3)$.
-	    Finally, to analyzse the cut rule case, let us remark that, given the sequent $(a,b)$, if 
-	    $a$ and $b$ is not in the set
-	    of the axiom formulas $AF$, then the complexity to add the sequent is constant. Otherwise,
-	    if either $a$ or $b$ is in $AF$, then the complexity to add the sequent is linear. Let's
-	    build a partition of the set of our sequents such as, 
-	    $I=\{(a,b)\mid a\in AF\text{ or }b\in AF\}$ and 
-	    $J=\{(a,b)\mid a\not\in AF\text{ and }b\not\in AF\}$.
-	    Splitting the sum of operations done, depending on the case we are in, we get,
-	    \[ 
-		    \sum_{(a,b)\in I}n+\sum_{(a,b)\in J}1\le n^2(|AF|+1) 
-	    \]
-	    Summing up every cases, we finally get that the overall complexity of the 
+	    hence, bounded by $n$. In the overall, we therefore lie in $\mathcal{O}(n^3)$. Finally,
+	    it remains the cut rule case to analyse. At each iteration, the algorithms update, in
+	    constant time, the dual structures $\overrightarrow{P}$ and $\overleftarrow{P}$. Then, it
+	    iterates the formulas $\phi$ on both of them to deduce respectively $(a,\phi)$ and 
+	    $(\phi,b)$. With a coarse evaluation, for every formula $x$, $\overrightarrow{P}(x)$ and
+	    $\overleftarrow{P}(x)$ are of cardinal at most $|SF|$, since $x$ can prove at most
+	    all subformulas and can, at most, be proven by all subformulas. Thus, we get a time
+	    complexity in $\mathcal{O}(n)$ at each iteration. However, we can refine this bound since
+	    the cut rule instances are crafted with axioms only.
+	    %Finally, to analyse the cut rule case, let us remark that, given the sequent $(a,b)$, if 
+	    %$a$ and $b$ is not in the set
+	    %of the axiom formulas $AF$, then the complexity to add the sequent is constant. Otherwise,
+	    %if either $a$ or $b$ is in $AF$, then the complexity to add the sequent is linear. Let's
+	    %build a partition of the set of our sequents such as, 
+	    %$I=\{(a,b)\mid a\in AF\text{ or }b\in AF\}$ and 
+	    %$J=\{(a,b)\mid a\not\in AF\text{ and }b\not\in AF\}$.
+	    %Splitting the sum of operations done, depending on the case we are in, we get,
+	    %\[ 
+		%    \sum_{(a,b)\in I}n+\sum_{(a,b)\in J}1\le n^2(|AF|+1) 
+	    %\]
+	    Summing up every cases we enumerated, we finally get that the overall complexity of the 
 	    algorithm~\ref{alg2} lies, in the worst case, in $\mathcal{O}(n^3)$.
     \end{proof}
     \begin{remark}
-	    Let us take time to write some remarks on the OCaml implementation. First of all, to avoid
-	    stack overflowing, the algorithm has been written tail-recursively. Then, pay a special 
+	    Let us take time to write several remarks on the OCaml implementation. First, since the
+	    recursion call may be deep, to avoid any
+	    stack overflow, the algorithm has been written tail-recursively. Then, pay a special 
 	    attention
 	    to the data structure $B$. Indeed, it supposes that the operators $\wedge$ and $\vee$ are of
 	    arity exactly two. Therefore, one cannot encode the formulas in an ADT that, for instance,
 	    would type the conjunction constructor such as 
 	    $\text{And}:\text{formula }list\rightarrow\text{formula}$. Doing that, one would need to
-	    filter the formulas having arity exactly $2$ to add them to the datastructure $B$, which
+	    filter the formulas having arity exactly $2$ to add them to the data structure $B$, which
 	    results in an unsound algorithm, according to the OL proof system.
     \end{remark}
     \subsection{Evaluation}
     Now that we have a working efficient algorithm, we are ready to compare it to SAT solvers on the
     class of problems of circuit equivalence checking, modulo variable renaming, presented in 
     section~\ref{equiv_section}. Among the benchmarks we dispose, a circuit that appears to be
-    particularly hard is the circuit of multiplication operation. Its hardness is one of the reason
+    particularly hard is the EPFL's circuit of multiplication operation (\textsf{multiplier.aig}). 
+    Its hardness is one of the reason
     why one cannot easily break the RSA cipher protocol with a computer. The testing procedure is the
     following. First, we parse the given AIGER file and we store the data in a convenient algebraic
     data type. Then, from this data, we build the circuit equivalence by renaming the intermediate
@@ -1006,9 +1032,8 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 	    SAT solvers}
 	    \label{benchmark_equiv}
     \end{table}
-
-    Depending on the instances of the multiplier circuits, the proof-search algorithm~\ref{alg2} (OLSC) 
-    performs 20 to 30 times faster than CryptoMinisat and 5 to 9 time faster than CaDiCaL.
+    Depending on the instance of the multiplier circuit, the proof-search algorithm~\ref{alg2} (OLSC) 
+    performs twenty to thirty times faster than CryptoMinisat and five to nine time faster than CaDiCaL.
     % TODO:
     % - give an explicit procedure of encoding of the equivalence problem into OL
 
@@ -1025,8 +1050,8 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
     would be interesting for SAT solvers to provide an interface that allows one to specify the
     encoding of a given class of problems into the OL framework. Our algorithm would then be called
     when the solver has to deal with such class of problems. There is also improvements to do on the
-    algorithm~\ref{alg2} itself. The main problem is the datastructure $B^\diamond$ because it enforces
-    us not to use an ADT able to flatten the formula, leading to stack overflows of the datastructure
+    algorithm~\ref{alg2} itself. The main problem is the data structure $B^\diamond$ because it enforces
+    us not to use an ADT able to flatten the formula, leading to stack overflows of the data structure
     when the formula is too big. Therefore, we would rather need to type $B^\diamond$ with 
     $SF\text{ list}\rightarrow\mathcal{P}(SF)$. This maps an arbitrary list of subformulas to
     the set of every existing permutation that lies in $SF$, according to the operator $\diamond$.
@@ -1034,7 +1059,7 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
     Along this work, we investigated several ways to improve the performance of SAT solvers using
     some properties of \textit{orthologics}. On one hand, we have shown that preprocessing the formulas 
     using the OL normal form could, in average, speed up the solving. On the other hand, we provided an
-    efficient proof-search algorithm to prove statement within the OL proof system.
+    efficient proof-search algorithm to prove statements within the OL proof system.
     \section{Appendix}
     \bibliographystyle{alpha}
     \bibliography{ol}
