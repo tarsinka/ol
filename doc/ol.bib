@@ -1,0 +1,247 @@
+@Article{Laurent17a,
+  author  = {Olivier Laurent},
+  title   = {Focusing in Orthologic},
+  journal = {Logical Methods in Computer Science},
+  volume  = {13},
+  number  = {3},
+  pages   = {6},
+  month   = jul,
+  year    = {2017}
+}
+@article{10.1145/3632881,
+author = {Guilloud, Simon and Kun\v{c}ak, Viktor},
+title = {Orthologic with Axioms},
+year = {2024},
+issue_date = {January 2024},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {8},
+number = {POPL},
+url = {https://doi.org/10.1145/3632881},
+doi = {10.1145/3632881},
+abstract = {We study the proof theory and algorithms for orthologic, a logical system based on ortholattices, which have shown practical relevance in simplification and normalization of verification conditions. Ortholattices weaken Boolean algebras while having polynomial-time equivalence checking that is sound with respect to Boolean algebra semantics. We generalize ortholattice reasoning and obtain an algorithm for proving a larger class of classically valid formulas.As the key result, we analyze a proof system for orthologic augmented with axioms. An important feature of the system is that it limits the number of formulas in a sequent to at most two, which makes the extension with axioms non-trivial. We show a generalized form of cut elimination for this system, which implies a sub-formula property. From there we derive a cubic-time algorithm for provability from axioms, or equivalently, for validity in finitely presented ortholattices. We further show that propositional resolution of width 5 proves all formulas provable in orthologic with axioms. We show that orthologic system subsumes resolution of width 2 and arbitrarily wide unit resolution and is complete for reasoning about generalizations of propositional Horn clauses.Moving beyond ground axioms, we introduce effectively propositional orthologic (by analogy with EPR for classical logic), presenting its semantics as well as a sound and complete proof system. Our proof system implies the decidability of effectively propositional orthologic, as well as its fixed-parameter tractability for a bounded maximal number of variables in each axiom. As a special case, we obtain a generalization of Datalog with negation and disjunction.},
+journal = {Proc. ACM Program. Lang.},
+month = jan,
+articleno = {39},
+numpages = {29},
+keywords = {Decision procedures, Logic and decidability, Verification, Orthologic}
+}
+@inproceedings{DBLP:conf/cav/GuilloudBMK23,
+  author       = {Simon Guilloud and
+                  Mario Bucev and
+                  Dragana Milovancevic and
+                  Viktor Kuncak},
+  editor       = {Constantin Enea and
+                  Akash Lal},
+  title        = {Formula Normalizations in Verification},
+  booktitle    = {Computer Aided Verification - 35th International Conference, {CAV}
+                  2023, Paris, France, July 17-22, 2023, Proceedings, Part {III}},
+  series       = {Lecture Notes in Computer Science},
+  volume       = {13966},
+  pages        = {398--422},
+  publisher    = {Springer},
+  year         = {2023},
+  url          = {https://doi.org/10.1007/978-3-031-37709-9\_19},
+  doi          = {10.1007/978-3-031-37709-9\_19},
+  timestamp    = {Tue, 12 Sep 2023 07:57:21 +0200},
+  biburl       = {https://dblp.org/rec/conf/cav/GuilloudBMK23.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+@article{Gentzen1935UntersuchungenD,
+  title={Untersuchungen {\"u}ber das logische Schlie{\ss}en. I},
+  author={Gerhard Gentzen},
+  journal={Mathematische Zeitschrift},
+  year={1935},
+  volume={39},
+  pages={176-210},
+  url={https://api.semanticscholar.org/CorpusID:121546341}
+}
+@article{10.1145/321033.321034,
+author = {Davis, Martin and Putnam, Hilary},
+title = {A Computing Procedure for Quantification Theory},
+year = {1960},
+issue_date = {July 1960},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {7},
+number = {3},
+issn = {0004-5411},
+url = {https://doi.org/10.1145/321033.321034},
+doi = {10.1145/321033.321034},
+abstract = {The hope that mathematical methods employed in the investigation of formal logic would lead to purely computational methods for obtaining mathematical theorems goes back to Leibniz and has been revived by Peano around the turn of the century and by Hilbert's school in the 1920's. Hilbert, noting that all of classical mathematics could be formalized within quantification theory, declared that the problem of finding an algorithm for determining whether or not a given formula of quantification theory is valid was the central problem of mathematical logic. And indeed, at one time it seemed as if investigations of this “decision” problem were on the verge of success. However, it was shown by Church and by Turing that such an algorithm can not exist. This result led to considerable pessimism regarding the possibility of using modern digital computers in deciding significant mathematical questions. However, recently there has been a revival of interest in the whole question. Specifically, it has been realized that while no decision procedure exists for quantification theory there are many proof procedures available—that is, uniform procedures which will ultimately locate a proof for any formula of quantification theory which is valid but which will usually involve seeking “forever” in the case of a formula which is not valid—and that some of these proof procedures could well turn out to be feasible for use with modern computing machinery.Hao Wang [9] and P. C. Gilmore [3] have each produced working programs which employ proof procedures in quantification theory. Gilmore's program employs a form of a basic theorem of mathematical logic due to Herbrand, and Wang's makes use of a formulation of quantification theory related to those studied by Gentzen. However, both programs encounter decisive difficulties with any but the simplest formulas of quantification theory, in connection with methods of doing propositional calculus. Wang's program, because of its use of Gentzen-like methods, involves exponentiation on the total number of truth-functional connectives, whereas Gilmore's program, using normal forms, involves exponentiation on the number of clauses present. Both methods are superior in many cases to truth table methods which involve exponentiation on the total number of variables present, and represent important initial contributions, but both run into difficulty with some fairly simple examples.In the present paper, a uniform proof procedure for quantification theory is given which is feasible for use with some rather complicated formulas and which does not ordinarily lead to exponentiation. The superiority of the present procedure over those previously available is indicated in part by the fact that a formula on which Gilmore's routine for the IBM 704 causes the machine to computer for 21 minutes without obtaining a result was worked successfully by hand computation using the present method in 30 minutes. Cf. §6, below.It should be mentioned that, before it can be hoped to employ proof procedures for quantification theory in obtaining proofs of theorems belonging to “genuine” mathematics, finite axiomatizations, which are “short,” must be obtained for various branches of mathematics. This last question will not be pursued further here; cf., however, Davis and Putnam [2], where one solution to this problem is given for ele},
+journal = {J. ACM},
+month = jul,
+pages = {201–215},
+numpages = {15}
+}
+
+@inproceedings{11cf478fe9d5463eb66cfafaa9577771,
+title = "Generation of hard non-clausal random satisfiability problems",
+abstract = "We present the results from experiments with a new family of random formulas for the satisfiability problem. Our proposal is a generalisation of the random k-SAT model that introduces non-clausal formulas and exhibits interesting features such as experimentally observed sharp phase transition and the easy-hard-easy pattern. The experimental results provide some insights on how the use of different clausal translations can affect the performance of satisfiability solving algorithms. We also expect our model to provide diverse and challenging benchmarks for developers of SAT procedures for non-clausal formulas. Copyright {\textcopyright} 2005, American Association for Artificial Intelligence (www.aaai.org). All rights reserved.",
+author = "Navarro, {Juan A.} and Andrei Voronkov",
+year = "2005",
+language = "English",
+volume = "1",
+pages = "436--442",
+booktitle = "Proceedings of the National Conference on Artificial Intelligence|Proc Natl Conf Artif Intell",
+publisher = "AAAI Press",
+address = "United States",
+note = "20th National Conference on Artificial Intelligence and the 17th Innovative Applications of Artificial Intelligence Conference, AAAI-05/IAAI-05 ; Conference date: 01-07-2005",
+url = "http://dblp.uni-trier.de/db/conf/aaai/aaai2005.html#NavarroV05http://dblp.uni-trier.de/rec/bibtex/conf/aaai/NavarroV05.xmlhttp://dblp.uni-trier.de/rec/bibtex/conf/aaai/NavarroV05",
+
+}
+@article{MCCUNE1998285,
+title = {Automatic proofs and counterexamples for some ortholattice identities},
+journal = {Information Processing Letters},
+volume = {65},
+number = {6},
+pages = {285-291},
+year = {1998},
+issn = {0020-0190},
+doi = {https://doi.org/10.1016/S0020-0190(98)00015-5},
+url = {https://www.sciencedirect.com/science/article/pii/S0020019098000155},
+author = {William McCune},
+keywords = {Automatic theorem proving, Ortholattice, Quantum logic, Theory of computation},
+abstract = {This note answers questions on whether three identities known to hold for orthomodular lattices are true also for ortholattices. One identity is shown to fail by MACE, a program that searches for counterexamples, and the other two are proved to hold by EQP, an equational theorem proven. The problems, from work in quantum logic, were given to us by Norman Megill.}
+}
+@article{2c73be7a-3de4-3824-8e11-49ebe4b183e4,
+ ISSN = {0003486X, 19398980},
+ URL = {http://www.jstor.org/stable/1968621},
+ author = {Garrett Birkhoff and John Von Neumann},
+ journal = {Annals of Mathematics},
+ number = {4},
+ pages = {823--843},
+ publisher = {[Annals of Mathematics, Trustees of Princeton University on Behalf of the Annals of Mathematics, Mathematics Department, Princeton University]},
+ title = {The Logic of Quantum Mechanics},
+ urldate = {2025-07-23},
+ volume = {37},
+ year = {1936}
+}
+@article{Bruns_1976, title={Free Ortholattices}, volume={28}, DOI={10.4153/CJM-1976-095-6}, number={5}, journal={Canadian Journal of Mathematics}, author={Bruns, Günter}, year={1976}, pages={977–985}}
+@InProceedings{10.1007/978-3-031-37709-9_19,
+author="Guilloud, Simon
+and Bucev, Mario
+and Milovan{\v{c}}evi{\'{c}}, Dragana
+and Kun{\v{c}}ak, Viktor",
+editor="Enea, Constantin
+and Lal, Akash",
+title="Formula Normalizations in Verification",
+booktitle="Computer Aided Verification",
+year="2023",
+publisher="Springer Nature Switzerland",
+address="Cham",
+pages="398--422",
+abstract="We apply and evaluate polynomial-time algorithms to compute two different normal forms of propositional formulas arising in verification. One of the normal form algorithms is presented for the first time. The algorithms compute normal forms and solve the word problem for two different subtheories of Boolean algebra: orthocomplemented bisemilattice (OCBSL) and ortholattice (OL). Equality of normal forms decides the word problem and is a sufficient (but not necessary) check for equivalence of propositional formulas. Our first contribution is a quadratic-time OL normal form algorithm, which induces a coarser equivalence than the OCBSL normal form and is thus a more precise approximation of propositional equivalence. The algorithm is efficient even when the input formula is represented as a directed acyclic graph. Our second contribution is the evaluation of OCBSL and OL normal forms as part of a verification condition cache of the Stainless verifier for Scala. The results show that both normalization algorithms substantially increase the cache hit ratio and improve the ability to prove verification conditions by simplification alone. To gain further insights, we also compare the algorithms on hardware circuit benchmarks, showing that normalization reduces circuit size and works well in the presence of sharing.",
+isbn="978-3-031-37709-9"
+}
+@article{43df3167-5a81-387d-88d7-2d29cdf1c881,
+ ISSN = {0003486X, 19398980},
+ URL = {http://www.jstor.org/stable/1969001},
+ author = {Philip M. Whitman},
+ journal = {Annals of Mathematics},
+ number = {1},
+ pages = {325--330},
+ publisher = {[Annals of Mathematics, Trustees of Princeton University on Behalf of the Annals of Mathematics, Mathematics Department, Princeton University]},
+ title = {Free Lattices},
+ urldate = {2025-07-23},
+ volume = {42},
+ year = {1941}
+}
+@article{865e9aad-6de2-3b16-9861-412a9b18e683,
+ ISSN = {00223611, 15730433},
+ URL = {http://www.jstor.org/stable/30226082},
+ author = {R. I. Goldblatt},
+ journal = {Journal of Philosophical Logic},
+ number = {1/2},
+ pages = {19--35},
+ publisher = {Springer},
+ title = {Semantic Analysis of Orthologic},
+ urldate = {2025-07-24},
+ volume = {3},
+ year = {1974}
+}
+@book{30573279-e8ec-3f1e-b0ba-eaf73275f821,
+ ISBN = {9780691178561},
+ URL = {http://www.jstor.org/stable/j.ctt1wq8zhp},
+ abstract = {Quantum mechanics was still in its infancy in 1932 when the young John von Neumann, who would go on to become one of the greatest mathematicians of the twentieth century, publishedMathematical Foundations of Quantum Mechanics--a revolutionary book that for the first time provided a rigorous mathematical framework for the new science. Robert Beyer's 1955 English translation, which von Neumann reviewed and approved, is cited more frequently today than ever before. But its many treasures and insights were too often obscured by the limitations of the way the text and equations were set on the page. In this new edition of this classic work, mathematical physicist Nicholas Wheeler has completely reset the book in TeX, making the text and equations far easier to read. He has also corrected a handful of typographic errors, revised some sentences for clarity and readability, provided an index for the first time, and added prefatory remarks drawn from the writings of Léon Van Hove and Freeman Dyson. The result brings new life to an essential work in theoretical physics and mathematics.},
+ author = {John von Neumann and ROBERT T. BEYER},
+ edition = {NED - New edition},
+ publisher = {Princeton University Press},
+ title = {Mathematical Foundations of Quantum Mechanics: New Edition},
+ urldate = {2025-07-24},
+ year = {2018}
+}
+@inproceedings{item_309aea67b5a145328a6f0a141d8f1ab3, title={The EPFL Combinational Benchmark Suite}, url={https://infoscience.epfl.ch/handle/20.500.14299/113476}, abstractNote={In this paper, we present the EPFL combinational benchmark suite. We aim at completing existing benchmark suites by focusing only on natively combinational benchmarks. The EPFL combinational benchmark suite consists of 23 combinational circuits designed to challenge modern logic optimization tools. It is further divided into three parts. The first part includes 10 arithmetic benchmarks, e.g., square-root, hypotenuse, divisor, multiplier etc.. The second part consists of 10 random/control benchmarks, e.g., round-robin arbiter, lookahead XY router, alu control unit, memory controller etc.. The third part contains 3 very large circuits, featuring more than ten million gates each. All benchmarks have a moderate number of inputs/outputs ranging from few tens to about one thousand. The EPFL benchmark suite is available to the public and distributed in all Verilog, VHDL, BLIF and AIGER formats. In addition to providing the benchmarks, we keep track of the best optimization results, mapped into LUT-6, for size and depth metrics. Better logic implementations can be submitted online. After combinational equivalence checking tests, the best LUT-6 realizations will be included in the benchmark suite together with the author’s name and affiliation.}, author={Amarù, Luca and Gaillardon, Pierre-Emmanuel and De Micheli, Giovanni}, year={2015}, journal={Proceedings of the 24th International Workshop on Logic & Synthesis (IWLS)} }
+@inproceedings{BiereFallerFazekasFleuryFroleyks-CAV24,
+  author       = {Armin Biere and
+                  Tobias Faller and
+                  Katalin Fazekas and
+                  Mathias Fleury and
+                  Nils Froleyks and
+                  Florian Pollitt},
+  editor       = {Arie Gurfinkel and
+                  Vijay Ganesh},
+  title        = {{CaDiCaL 2.0}},
+  booktitle    = {Computer Aided Verification - 36th International Conference, {CAV}
+                  2024, Montreal, QC, Canada, July 24-27, 2024, Proceedings, Part {I}},
+  series       = {Lecture Notes in Computer Science},
+  volume       = {14681},
+  pages        = {133--152},
+  publisher    = {Springer},
+  year         = {2024},
+  doi          = {10.1007/978-3-031-65627-9\_7},
+}
+@InProceedings{10.1007/978-3-642-02777-2_24,
+author="Soos, Mate
+and Nohl, Karsten
+and Castelluccia, Claude",
+editor="Kullmann, Oliver",
+title="Extending SAT Solvers to Cryptographic Problems",
+booktitle="Theory and Applications of Satisfiability Testing - SAT 2009",
+year="2009",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="244--257",
+abstract="Cryptography ensures the confidentiality and authenticity of information but often relies on unproven assumptions. SAT solvers are a powerful tool to test the hardness of certain problems and have successfully been used to test hardness assumptions. This paper extends a SAT solver to efficiently work on cryptographic problems. The paper further illustrates how SAT solvers process cryptographic functions using automatically generated visualizations, introduces techniques for simplifying the solving process by modifying cipher representations, and demonstrates the feasibility of the approach by solving three stream ciphers.",
+isbn="978-3-642-02777-2"
+}
+@inproceedings{velev, 
+	title={FVP-UNSAT 2.0 Benchmark Suite, Available from: http://www.ece.cmu.edu/~mvelev}, 
+	url={http://www.ece.cmu.edu/~mvelev}, 
+	author={M. N. Velev}, 
+	year={2001}
+}
+@Inbook{Tseitin1983,
+author="Tseitin, G. S.",
+editor="Siekmann, J{\"o}rg H.
+and Wrightson, Graham",
+title="On the Complexity of Derivation in Propositional Calculus",
+bookTitle="Automation of Reasoning: 2: Classical Papers on Computational Logic 1967--1970",
+year="1983",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="466--483",
+abstract="The question of the minimum complexity of derivation of a given formula in classical propositional calculus is considered in this article and it is proved that estimates of complexity may vary considerably among the various forms of propositional calculus. The forms of propositional calculus used in the present article are somewhat unusual, {\textdagger} but the results obtained for them can, in principle, be extended to the usual forms of propositional calculus.",
+isbn="978-3-642-81955-1",
+doi="10.1007/978-3-642-81955-1_28",
+url="https://doi.org/10.1007/978-3-642-81955-1_28"
+}
+@book{free_lattices_ams,
+author="R. Freese, J. Jezek, J. B. Nation",
+title="Free Lattices",
+year="1995",
+publisher="Mathematical Surveys and Monographs",
+doi="https://doi.org/10.1090/surv/042"
+}
+@inproceedings{BiereFallerFazekasFleuryFroleyksPollitt-SAT-Competition-2024-solvers,
+  author       = {Armin Biere and Tobias Faller and Katalin Fazekas and Mathias Fleury and Nils Froleyks and Florian Pollitt},
+  title	       = {{CaDiCaL}, {Gimsatul}, {IsaSAT} and {Kissat} Entering the {SAT Competition 2024}},
+  editor       = {Marijn Heule and Markus Iser and Matti J{\"a}rvisalo and Martin Suda},
+  booktitle    = {Proc.~of {SAT Competition} 2024 -- Solver, Benchmark and
+                  Proof Checker Descriptions},
+  volume       = {B-2024-1},
+  series       = {Department of Computer Science Report Series B},
+  publisher    = {University of Helsinki},
+  year	       = 2024,
+  pages	       = {8-10},
+}
