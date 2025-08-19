@@ -40,7 +40,7 @@
 \DeclareMathOperator{\nf}{NF}
 
 \title{Master Internship's report}
-\author{Vladislas de Haldat\\\small{Supervised by Simon Guilloud and Viktor Kunčak, EPFL}}
+\author{Vladislas de Haldat\\Supervised by Simon Guilloud and Viktor Kunčak, EPFL}
 
 \begin{document}
 
@@ -50,33 +50,41 @@
 	With the advent of computers in the second half of the XXth century, the question whether 
 	machines are able or not to \textit{reason} and to automatically prove mathematical statements 
 	rised from its ashes. In the 60s, a convenient method has been exhibited by Davis and Putnam
-	and has proved itself in term of efficiency so far. It consists in transforming the problem one
-	wants to solve into a conjunctive normal form. This normal form allows the computer to
-	efficiently derive a proof using a couple of logical rules only. Doing that, we are in fact
+	and has proved itself in term of efficiency so far. It consists in taking the negation of the
+	formula one wants to prove and to transform it into conjunctive normal form. This normal form 
+	allows the computer to efficiently derive a proof using a couple of logical rules only. Then, if 
+	the algorithm finds an assignement to the derived formula, it means that the original problem 
+	is not valid. Otherwise, it is valid. Doing all that, we are in fact
 	reducing the problem to the SAT problem that is known to be NP complete. This implies that,
 	supposing $P\neq NP$, no deterministic algorithm is able to decide the problem in polynomial
 	time. However, the use of heuristics, that is to say, the use of non-deterministic algorithms
-	helps to improve time spent to solve a SAT problem. The conjunctive normal form is, of course,
+	helps to decrease the time spent to solve a SAT problem. Nowaday, most of the top SAT solvers
+	rely on that method and do optimizations on the data structures they use.
+	The conjunctive normal form is, of course,
 	not the only normal form that has been tried to get better performance to automatic reasonning.
 	In the beginning of the 2000s, researchers tried to take advantage of the negation normal form.
 	The singularity of this normal form is that the negation operator is only applied on litterals.
 	According to rewriting rules of boolean algebra, one can derive the negative normal form of a
 	given formula in linear time. However, those proposed algorithms never reached performances
-	comparable to the former algorithms, based on the conjunctive normal form. The following report
-	is about a way to improve the current state of the art of modern SAT solvers in two different
-	ways. On one hand, we look to improve the preprocessing of formulas by applying a new normal
-	form that gets rid of some redundancy, making the formulas smaller. On the other hand, we explore
-	a new set of rules that helps to improve solving performances on some kind of hard problems.
+	comparable to the former algorithms, based on the conjunctive normal form. 
+	%The following report
+	%is about a way to improve the current state of the art of modern SAT solvers in two different
+	%ways. On one hand, we look to improve the preprocessing of formulas by applying a new normal
+	%form that gets rid of some redundancy, making the formulas smaller. On the other hand, we explore
+	%a new set of rules that helps to improve solving performances on some kind of hard problems.
 
 	%What is the report about ? Where does the problem come from ? What is the state of the art in that area ?
 
 	\subsection*{Research problem}
 	In the following, we tackle a generalization of classical logic that is called 
 	\textit{orthologic} (OL for short) and we try to take advantage of
-	some of its properties to derive an efficient solving algorithm on some specific class of 
-	problems. Indeed, the SAT solvers are good in average, but they can be very slow on classes of
+	some of its properties to preprocess formulas but also to derive an efficient proof search 
+	algorithm on some specific class of problems. In particular, we try to improve an existing 
+	proof search algorithm in the framework of OL
+	that has a cubical worst case complexity. Indeed, the SAT solvers are good in average, but they 
+	can be very slow on classes of
 	problems that are intuitively easy or that have enough structure to be efficiently decided by an
-	algorithm. We improve the state of the art solvers by using alternatie technique to solve these
+	algorithm. We improve the state of the art solvers by using alternative technique to solve these
 	specific classes. 
 %	The main motivation behind that research is the improvement of performance of
 %	automatic reasonning tools and, in particular, of SAT solvers. The goal is to integrate our
@@ -96,14 +104,17 @@
 	The contributions of this report are two fold. First, we show that the use of another normal
 	form, before transforming a formula into CNF, can improve the solving performances of SAT 
 	solvers.
-	Second, and this is the main contribution, we propose an efficient proof-search algorithm based 
-	on a proof system of the generalization of classical logic we use. We showed that it is correct 
-	and that it admits a cubical worst-case complexity. To evaluate the performances, we studied the 
-	specific class of problems of circuit
-	equivalence modulo renaming. This happens to be a class of problems SAT solvers struggle to 
-	deal with.
-	However, we showed that we can easely encode it into the framework of our proof system and 
-	thus, ask a proof for it in our proof system.
+	Second, we improve an algorithm for orthologic proof search. Despite having the same
+	theoretical complexity, the original version would essentially always hit the worst case whereas
+	our implementation avoids this. On problems of interest, our improved algorithm performs better 
+	than both preexisting OL algorithm and SAT solvers.
+	%We showed that it is correct 
+	%and that it admits a cubical worst-case complexity. To evaluate the performances, we studied the 
+	%specific class of problems of circuit
+	%equivalence modulo renaming. This happens to be a class of problems SAT solvers struggle to 
+	%deal with.
+	%However, we showed that we can easely encode it into the framework of our proof system and 
+	%thus, ask a proof for it in our proof system.
 
 	%What is your answer to the research problem?
 
@@ -111,8 +122,8 @@
 	%Pay special attention to the description  of the \emph{scientific} approach.
 
 	\subsection*{Arguments supporting its validity}
-	The results we have gathered come with benchmarks evaluation on different kind of problems.
-	Concerning the proof-search algorithm we exhibited, we provide, in addition to the benchmarking, 
+	The results we have gathered come with benchmark evaluation on different kind of problems.
+	Concerning the proof search algorithm we exhibited, we provide, in addition to the benchmarking, 
 	proofs of its correctness and of its worst case complexity. Furthermore, let us note that our
 	results do not rely on any kind of assumptions but rather on work of previous peers on the topic.
 
@@ -123,9 +134,9 @@
 
 	\subsection*{Summary and future work}
 	To sum up, we propose two ways to improve the current state of the art of SAT solvers. 
-	On way handles the preprocessing of the formulas while the other handles the proof-search
+	On way handles the preprocessing of the formulas while the other handles the proof search
 	algorithm for certain class of problems. Next, the immediate step to do is
-	to implement our algorithm within an existing simple SAT solver, such as Minisat, and test
+	to implement our algorithm within an existing SAT solver, such as Minisat or Kissat, and test
 	whether the performances are improved, compared to the original version. There are many questions
 	that stand further. The main one is to study the lifting to first order logic and the way to 
 	adapt our results to specific theories such as bit vectors, lists, arrays etc.
@@ -143,11 +154,13 @@
 	\newpage
     \section{Introduction}
     In this section, we shall introduce the key concepts and the notations that will be mainly used in
-    the present report. Few years after the advent of quantum mechanics, a rigorous mathematical 
+    the present report. Let us go back in the time. Few years after the advent of quantum mechanics, a 
+    rigorous mathematical 
     foundation has been proposed by von Neumann~\cite{30573279-e8ec-3f1e-b0ba-eaf73275f821} leading, 
     after some observations~\cite{2c73be7a-3de4-3824-8e11-49ebe4b183e4}, to a 
-    non-classical logical structure that would get rid of the distributivity identities. 
-    The associated algebra to such a structure is the class of the so
+    non-classical logical structure that would get rid of the distributivity identities that do not
+    behave well in the framework of quantum mechanics. 
+    The underlying algebra to such a structure is the class of the so
     called \textit{orthomodular lattices}, rather than the classical boolean algebras. This gave birth 
     to a new
     field of logic called the \textit{quantum logic}. The term of \textit{orthologic} has first been 
@@ -157,19 +170,19 @@
     Those are a generalization of the boolean algebras and, in particular, give up the axiom of 
     distributivity. For ortholattices are weaker than orthomodular lattices, it is also
     often called the \textit{minimal quantum logic}. 
-    First, we shall give some basic notions about lattices, after what, we will introduce the underlying 
+    First, we shall give some basic notions about lattices, after what, we will introduce the 
     notion of ortholattices. Then we will take a closer look to
     a normal form of the orthologic and, finally, we will present a proof system for orthologic.
     \begin{definition}[Lattice]
 	    A lattice $\langle L,\wedge,\vee\rangle$ is an algebraic structure where $L$ is a set and 
-	    $\wedge$ and $\vee$ are two binary, commutative, associative and idempotent operations 
-	    satisfying the
-	    following axiomatic identities, also called \textit{absorption laws}.
+	    $\wedge$ and $\vee$ are two binary, commutative and associative operations satisfying the
+	    following axiomatic identities, also called \textit{absorption laws} ;
 	    \begin{align*}
 		    a\vee(a\wedge b)&=a\\
 		    a\wedge(a\vee b)&=a
 	    \end{align*}
-	    Moreover, the lattice is said to be bounded when there exists two elements $\bot$ and $\top$
+	    From those follow the idempotent laws, $a\wedge a=a$ and $a\vee a=a$. Moreover, the lattice 
+	    is said to be bounded when there exists two elements $\bot$ and $\top$
 	    such that $x\vee\top=\top$, $x\wedge\bot=\bot$ and $x\vee\bot=x\wedge\top=x$.
     \end{definition}
     \begin{remark}
@@ -206,8 +219,6 @@
     far. With that set, one can show that boolean algebras are special cases of ortholattices, in 
     particular, the cases where distributivity holds.
     \begin{table}[h]
-	    \caption{Axiomatization of ortholattices}
-	    \label{tab_ax}
     \begin{center} 
 	    \begin{tabular}{ c|c }
 		    $x\vee y=y\vee x$&$x\wedge y=y\wedge x$\\
@@ -221,6 +232,8 @@
 		    $x\vee(x\wedge y)=x$&$x\wedge(x\vee y)=x$
 	    \end{tabular}
     \end{center}
+	    \caption{Axiomatization of ortholattices}
+	    \label{tab_ax}
     \end{table}
     \\
     Furthermore, note that this set of axiom is not minimal, but it highlights the duality between 
@@ -263,7 +276,7 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
     Given two elements $a$ and $b$, one would like to know whether $a\leq b$, $a=b$ or 
     $b\leq a$ hold. This is commonly known as the \textit{word problem}. Whitman proposes a procedure to
     solve it on free lattices~\cite{43df3167-5a81-387d-88d7-2d29cdf1c881} and that relies on
-    the following relations.
+    the following relations ;
     \begin{align}
 	    \bigwedge a_i\leq x&\Leftrightarrow\exists i,a_i\leq x\\
 	    x\leq\bigvee b_i&\Leftrightarrow\exists i,x\leq b_i\\
@@ -271,7 +284,7 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 	    x\leq\bigwedge b_i&\Leftrightarrow\forall i,x\leq b_i
     \end{align}
     Those relations are consequences of the axiomatization of free lattices. The important relation
-    stressed by Whitman is the following ;
+    stressed by Whitman, and that holds only in free lattices, is the following ;
     \[
 	    \bigwedge a_i\leq\bigvee b_j\Leftrightarrow\exists j,\bigwedge a_i\leq b_j\text{ or }
 	    \exists i,a_i\leq\bigvee b_j
@@ -280,7 +293,7 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
     solvable in quadratic time~\cite{Bruns_1976} and, more recently, an algorithm has 
     been proposed to efficiently compute such normal forms~\cite{10.1007/978-3-031-37709-9_19}. The
     important property of the normal form for orthologic we are about to expose, is that the
-    computed transformation ain't be larger than the original formula. The following result exhibits
+    computed transformation is not larger than the original formula. The following result exhibits
     the normal form for disjunction, it works dually for conjunction.
     \begin{theorem}[Normal form~\cite{free_lattices_ams}]
 	    A term that is a litteral is in normal form. A term $t=t_1\vee\cdots\vee t_m$, with $m>1$ 
@@ -310,8 +323,8 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
     non-logical axioms. To that end, one has to go beyond normal form and introduce a proof system. 
     There has been 
     many proposals of proof systems and, among them, we may highlight~\cite{Laurent17a} 
-    or~\cite{10.1145/3632881}. The second one precisely has the advantage to handle non-logical axioms 
-    and to have a better complexity, therefore, we shall focus on it for our purposes. 
+    and~\cite{10.1145/3632881}. The second one precisely has the advantage to handle non-logical axioms 
+    and to have a better complexity, therefore, we will focus on it for our purposes. 
     \begin{definition}[Orthologic's sequent]
 	    If $\phi$ is a formula, we say that $\phi^L$ and $\phi^R$ are annotated formulas. A 
 	    sequent is a set of at most two annotated formulas.
@@ -336,7 +349,7 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 			    \inferrule*[Right=(Cut)]{\Gamma,\phi^R\\\phi^L,\Delta}{\Gamma,\Delta}
 		    \]
 		    \[
-			    \inferrule*[Right=(Weakening)]{\Gamma}{\Gamma,\Delta}
+			    \inferrule*[Right=(Weaken)]{\Gamma}{\Gamma,\Delta}
 		    \]
 		    \begin{align*}
 		    \inferrule*[Right=(Hyp)]{ }{\phi^L,\phi^R}
@@ -398,7 +411,7 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 	    example~\ref{example1} that this relation is not valid in ortholattices and, hence,
 	    the sequent $(x\wedge(\neg x\vee y))^L,y^R$ is not provable in orthologic without the axiom
 	    rule. However, considering the axiom rule, it is possible, by using the axiom 
-	    $x\wedge(\neg x\vee y)^R$, to prove the sequent $y^R$. The following is the proof. First,
+	    $(x\wedge(\neg x\vee y))^R$, to prove the sequent $y^R$. The following is the proof. First,
 	    let us prove $(\neg x\vee y)^R$.
 	    \begin{mathpar}
 		    \inferrule*[Right=Cut]
@@ -412,16 +425,16 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 		    }
 		    {(\neg x\vee y)^R}
 	    \end{mathpar}
-	    We shall call $\pi$ that former proof. Now, let us prove $y^R$.
+	    We shall call $\pi$ that former proof. Now, let us prove $y^R$ ;
 	    \begin{mathpar}
 		\inferrule*[Right=Cut]
-		{
-			\inferrule*[]{\pi}{(\neg x\vee y)^R}\\
+		{	
+		    \inferrule*[]{\inferrule*[vdots=1.5em]{}{\pi}}{(\neg x\vee y)^R}\\
 		\inferrule*[Right=$(\vee$-$L)$]
 		{
 		\inferrule*[Right=Hyp]{ }{y^L,y^R}
 		\\
-		\inferrule*[Right=Weak]
+		\inferrule*[Right=Weaken]
 		{
 		\inferrule*[Right=$(\neg$-$L)$]
 		{
@@ -456,7 +469,7 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
     normal form in OL can be computed in worst-case quadratic time and has the good property of not
     being larger than the original formula. Therefore, the immediate question to ask is whether a SAT
     solver answers faster to a formula that has been first normalized into OL normal form and then, into 
-    CNF ? The main problem to that question is the lack of benchmarks that would contain
+    CNF. The main problem to that question is the lack of benchmarks that would contain
     formulas not in conjunctive normal form that still remain hard for
     SAT solvers to decide. To test our approach, we mainly used two kind of benchmarks.
     \subsection{Formula generation}
@@ -529,18 +542,22 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
     \end{table}
     \section{The equivalence problem}
     \label{equiv_section}
-    To take advantage of the proof-search algorithm we will present later, one needs to find a class of 
+    To take advantage of the proof search algorithm we will present later, one needs to find a class of 
     problems
     that is hard for SAT solver to solve and that is easy to encode in the framework of orthologic.
     Let us go back to the circuits we used to benchmark the preprocessing method. An interesting
     question, that is hard for most of the solvers to answer to, is the question of equivalence between
-    two circuits modulo variable renaming. The remaining work is now to prove that this specific problem
-    can effectively be encoded in the OL proof system with axioms.
+    two circuits modulo variable renaming. First, let us provide the encoding of the problem into axioms.
+    In the circuit, each intermediate variable $x$ is equal to a formula $\phi$. Let $\mathcal{A}$ be the
+    set of axioms. For each of those intermediate variable, we add to $\mathcal{A}$ the axioms 
+    $x^L,\phi^R$ and $x^R,\phi^L$. The example~\ref{circ_ex} illustrates the procedure. 
+    The remaining work is now to prove that this specific problem
+    can effectively be encoded within the OL proof system with axioms.
     \begin{theorem}
 	    \label{th_equiv}
-	    Let $C$ and $C'$ be two equivalent circuits modulo intermediate variable renaming.
-	    Furthermore, let $z$ be the output of $C$ and $z'$ be the output of $C'$. There exists
-	    a set of axioms $\mathcal{A}$ such that $z\vdash z'$ in OL. 
+	    Let $F$ and $G$ be two equivalent circuits modulo intermediate variable renaming.
+	    Furthermore, let $z$ be the output of $F$ and $z'$ be the output of $G$ and $\mathcal{A}$
+	    the set of axioms. Then the sequent $z^L,z'^R$ is valid in OL with axioms. 
     \end{theorem}
     \begin{proof}
 	    We shall do a syntactic proof by induction on the structure of $z$.
@@ -548,50 +565,54 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 		    \item
 			    if $z$ is a litteral, then it is straightforward.
 		    \item
-			    if $z=z_1\wedge z_2$, we designate as axioms
-			    $(z, z_1\wedge z_2)$ and $(z_1'\wedge z_2',z')$. Then, we first 
+			    if $z=z_1\wedge z_2$, we need the axioms
+			    $z^L,(z_1\wedge z_2)^R$ and $(z_1'\wedge z_2')^L,z'^R$. Then, we first 
 			    apply the cut rule,
 			    \[
-				\inferrule*[Right=(Cut)]
-				{z\vdash z_1\wedge z_2 \\ z_1\wedge z_2\vdash z'}
-				{z\vdash z'}
+				\inferrule*[Right=Cut]
+				{z^L,(z_1\wedge z_2)^R\\(z_1\wedge z_2)^L,z'^R}
+				{z^L,z'^R}
 			    \]
 			    The first sequent is an axiom. To prove 
 			    the second one, we apply again the cut rule, leading us to,
 			    \[
-				\inferrule*[Right=(Cut)]
-				{z_1\wedge z_2\vdash z_1'\wedge z_2'\\ z_1'\wedge z_2'\vdash z'}
-				{z_1\wedge z_2\vdash z'}
+				\inferrule*[Right=Cut]
+				{(z_1\wedge z_2)^L,(z_1'\wedge z_2')^R\\(z_1'\wedge z_2')^L,z'^R}
+				{(z_1\wedge z_2)^L,z'^R}
 			    \]
 			    Here, the second sequent is an axiom by hypothesis whereas the first one 
 			    can be proven by applying
 			    first $(\wedge$-$R)$, then successively $(\wedge$-$L)$, giving us the two
-			    sequents $z_1\vdash z_1'$ and $z_2\vdash z_2'$ that admit a proof by
+			    sequents $z_1^L,z_1'^R$ and $z_2^L,z_2'^R$ that admit a proof by
 			    induction hypothesis.
 		    \item
-			    if $z=z_1\vee z_2$, we designate as axioms $(z,z_1\vee z_2)$ and 
-			    $(z_1'\vee z_2',z')$.
+			    if $z=z_1\vee z_2$, we need the axioms $z^L,(z_1\vee z_2)^R$ and 
+			    $(z_1'\vee z_2')^L,z'^R$.
 			    Then, the reasonning is exactly the same until the second 
 			    application of the cut rule, where it remains to prove the sequent 
-			    $z_1\vee z_2\vdash z_1'\vee z_2'$. Here, we apply first $(\vee$-$L)$ and then
-			    successively $(\vee$-$R)$, giving us the two sequents $z_1\vdash z_1'$ and
-			    $z_2\vdash z_2'$, both admitting a proof by induction hypothesis.
+			    $(z_1\vee z_2)^L,(z_1'\vee z_2')^R$. Here, we apply first $(\vee$-$L)$ and 
+			    then
+			    successively $(\vee$-$R)$, giving us the two sequents $z_1^L,z_1'^R$ and
+			    $z_2^L,z_2'^R$, both admitting a proof by induction hypothesis.
 		    \item
-			    if $z=\neg z_1$, we designate as axioms $(z,\neg z_1)$ and $(\neg z_1',z')$. 
+			    if $z=\neg z_1$, we need the axioms $z^L,(\neg z_1)^R$ and 
+			    $(\neg z_1')^L,z'^R$. 
 			    Then, we first apply the cut rule to introduce $\neg z_1$,
-			    producing the two sequents $z\vdash \neg z_1$ and $\neg z_1\vdash z'$.
+			    producing the two sequents $z^L,(\neg z_1)^R$ and $(\neg z_1)^L,z'^R$.
 			    The first one is an axiom. To prove the second one, we apply, once again,
 			    the cut rule to introduce $\neg z_1'$, giving us the two sequents
-			    $\neg z_1\vdash\neg z_1'$ and $\neg z_1'\vdash z'$. The second one is an 
+			    $(\neg z_1)^L,(\neg z_1')^R$ and $(\neg z_1')^L,z'^R$. The second one is an 
 			    axiom. To
 			    prove the remaining one, we successively apply $(\neg$-$L)$ and $(\neg$-$R)$,
-			    leading to the sequent $z_1'\vdash z_1$, that admits a proof by induction
+			    leading to the sequent $z_1'^L,z_1^R$, that admits a proof by induction
 			    hypothesis.
 	    \end{itemize}
-	    Finally, the set of axioms $\mathcal{A}$ we choose to prove a sequent is the union of the 
-	    axioms described in each case, for each subsequent.
+	    Every axiom we use is in $\mathcal{A}$, therefore, we get that $z^L,z'^R$ is valid in OL.
+	    %Finally, the set of axioms $\mathcal{A}$ we choose to prove a sequent is the union of the 
+	    %axioms described in each case, for each subsequent.
     \end{proof}
     \begin{example}
+	    \label{circ_ex}
 	    Let us now illustrate the equivalence problem on a simple example. Suppose the
 	    following circuit.
 	    \begin{center}
@@ -610,7 +631,7 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
     \end{example}
 
     \section{Proof search procedure for OL with axioms}
-    In relation with the proof system~\ref{ol_ps}, researchers have proposed a proof-search algorithm 
+    In relation with the proof system~\ref{ol_ps}, researchers have proposed a proof search algorithm 
     for orthologic with axioms that has a cubical complexity in time~\cite{10.1145/3632881}. The idea is
     to start from the goal sequent and to compute a backward search to eventually reach the hypothesis 
     and axioms by applying the rules of the proof system. However, the original formulation as a 
@@ -667,10 +688,10 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 	    target nodes.
     \end{definition}
     In fact, in our specific case, the elements of $E$ are essentially in $\mathcal{P}(V)\times V$ since
-    there is only one sequent to conclude with. With that set, we propose the proof-search 
+    there is only one sequent to conclude with. With that set, we propose the proof search 
     algorithm~\ref{proof_search_algo} for orthologic.
     \begin{algorithm}
-	    \caption{Cubic time proof-search algorithm for OL with axioms}
+	    \caption{Cubic time proof search algorithm for OL with axioms}
 	    \label{proof_search_algo}
     \begin{algorithmic}
 	    \State $(A,S)$ \textit{the given problem}
@@ -793,7 +814,7 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 	    If it is the case, then we add the hyperedge $\langle\varnothing,s\rangle$. For the
 	    remaining rules, one has to explicitely do the comparison with $\Gamma$ and $\Delta$. Let us
 	    focus on $\Delta$ with the $(\wedge$-$R)$ rule ; the proof is the same for $\Gamma$ and the
-	    other rules. If $\Gamma$ is equal to $(\phi,\psi)^R$ then, according to the rule, on needs
+	    other rules. If $\Gamma$ is equal to $(\phi,\psi)^R$ then, according to the rule, one needs
 	    to prove $\Gamma,\phi^R$ and $\Gamma,\psi^R$, therefore, the algorithm adds the hyperedge
 	    $\langle\{(\Gamma,\phi^R),(\Gamma,\psi^R)\},s\rangle$. Finally, to handle the cut rule,
 	    it enumerates every formula $a$ in the set of formulas that belong to axioms $A^*$ and
@@ -843,21 +864,22 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
     hypergraph. To improve that, we mainly use memoization and the average constant time access provided
     by hash tables in average.
     Still, this is not enough to beat any SAT solver. The main problem lies in the use of the cut
-    rule that generates at most $7+4|A|$ hyperedges. Thus, we spend $\mathcal{O}(|A|n^2)$ time
+    rule that generates a lot of irrelevant hyperedges. Thus, we spend $\mathcal{O}(|A|n^2)$ time
     in the first phase of the algorithm, even when a tiny fragment of those hyperedges are actually
     needed to complete the second phase.
     \subsection{Forward approach}
-    Although the complexity is still cubical, in practice, the main issue with the backward-forward 
-    approach is the construction of the hypergraph. Indeed,
-    the algorithm builds a huge subpart (according to some of our optimizations) of it, always leading 
-    to the worst case in time \textit{and} in space. Furthermore, most of the sequents belonging to 
-    that hypergraph may not be of any relevance in the proof. Let us refine this strategy by using the
+    %Although the complexity is still cubical, in practice, the main issue with the backward-forward 
+    %approach is the construction of the hypergraph. Indeed,
+    %the algorithm builds a huge subpart (according to some of our optimizations) of it, always leading 
+    %to the worst case in time \textit{and} in space. Furthermore, most of the sequents belonging to 
+    %that hypergraph may not be of any relevance in the proof. 
+    Let us refine this strategy by using the
     hypergraph \textit{implicitely} to find a path between the goal sequent and the axioms. To achieve
     that, we completely give up the backward approach to only proceed forwardly. 
     The idea of the algorithm is the following, we shall emphasize its efficiency.
     Each time we add a sequent to the set of proven sequents, we want to deduce every new sequent
     according to the set of rules of the OL proof system.
-    To do this efficiently, we are not allowed to do any kind of test while going through the set of
+    To do this efficiently, we are not allowed to do any kind of check while going through the set of
     proven sequents. Therefore, the data structure we were using until now is not sufficient
     and we shall introduce a new one. We can split the algorithm in three important parts, namely ;
     the cut rule, the rules with one premise and the rules with two premises. 
@@ -870,8 +892,8 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
     Suppose we just proved the sequent $(a,b)$. For the cut rule,
     it is possible to efficiently deduce the new sequent quite easily since we only have to
     lookup among the already proven sequents. Therefore, we need two dual maps 
-    $\overrightarrow{P}=x\mapsto\{y\in SF\mid x\vdash y\}$ and
-    $\overleftarrow{P}=x\mapsto\{y\in SF\mid y\vdash x\}$. Hence, to deduce
+    $\overrightarrow{P}=x\mapsto\{y\in SF\mid x^L,y^R\}$ and
+    $\overleftarrow{P}=x\mapsto\{y\in SF\mid y^L,x^R\}$. Hence, to deduce
     the new sequent from $(a,b)$, we can just add forall $x\in\overrightarrow{P}(b)$, $(a,x)$ and,
     dually, forall $y\in\overleftarrow{P}(a)$, $(y,b)$. Doing that, we nevertheless have an important
     issue that is that the algorithm is more likely to loop since it will, at some point, add a sequent
@@ -880,49 +902,54 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
     Although, we can achieve that in constant time with a hash table, we still \textit{check} the 
     belonging for every sequent we encounter. %Hence it is fairly inefficient. 
     Let us now have a look to the rules with only
-    one premise, that is $(\wedge$-$L)$ and $(\vee$-$R)$. We analyze only the former, since the strategy
-    is dual. We know $(a,b)$ is proven, from that, we can deduce that $a\vdash b\vee c$ and 
-    $a\wedge c\vdash b$ for a given $c$ and such that $b\vee c$ and $a\wedge c$ still belong to the set 
-    of subformulas $SF$ of our problem. To achieve that efficiently, we use two hash maps $A^\diamond$,
-    with $\diamond\in\{\wedge,\vee\}$, that bind a formula $x$ to the set of $\phi\in SF$ that are of
-    the shape $\phi=x\diamond y$ or $\phi=y\diamond x$. Those two dual maps are computable in linear time
+    one premise, that is $(\wedge$-$L)$ and $(\vee$-$R)$. We analyze only the former, since the 
+    reasonning is dual for the other. We know $(a,b)$ is proven, from that, we can deduce that 
+    $a^L,(b\vee c)^R$ and 
+    $(a\wedge c)^L,b^R$ for a given $c$ and such that $b\vee c$ and $a\wedge c$ still belong to the set 
+    of subformulas $SF$ of our problem. To achieve that efficiently, we use two hash maps $A^\star$,
+    with $\star\in\{\wedge,\vee\}$, that bind a formula $x$ to the set of \textit{superformulas} 
+    $\phi\in SF$ \ie that are of the shape $\phi=x\star y$ or $\phi=y\star x$ for a given $y$. 
+    Those two dual maps are computable in linear time
     with respect to the cardinal of the set of subformulas of the given problem. Finally, it remains to
     handle the case of the rules admitting two premises, namely, $(\vee$-$L)$ and $(\wedge$-$R)$. Let us
-    analyze only the left disjunction case, since the right conjunction is entirely symmetric. Roughly
+    analyze only the left disjunction case, since the right conjunction case is entirely symmetric. 
+    Roughly
     speaking, the difficulty here is to maintain the intersection between the set of subformulas $SF$
     and the set of formulas appearing in the left part of the proven sequents. For instance, suppose
-    we have proved $(a,b)$, we would like to deduce every $a\vee c\vdash b$ such that $a\vee c\in SF$.
+    we have proved $(a,b)$, we would like to deduce every $(a\vee c)^L,b^R$ such that $a\vee c\in SF$.
     To achieve that, we obviously need $(c,b)\in P$ which, with the naive method, forces us to go through
     either $SF$ or $P$ and to do some useless testing. To do this efficiently, we need to ensure that
     every element we encounter in our data structure will allow to produce a new proven sequent. The
     data structure we introduce takes advantage of the element the three sequents of the rule
     (the two premises and the conclusion) have in common. In our case, it is the right part, that is to 
-    say $b$. First, let us consider 
-    $B$ a hash map that binds to every formula $x$ another hash map that itself binds to every 
+    say $b$. First, let us consider $B^\vee$ (resp. $B^\wedge$) a hash map that binds to every formula 
+    $x$ another hash map that itself binds to every 
     formula $y$ a non-empty set $\{x\vee y,y\vee x\}\subseteq SF$. It is clear that those sets have 
     cardinal at 
     most $2$ depending on whether the formulas are in $SF$ or not. We now need the data structure that
     will keep in memory that \textit{intersection} between the proven sequents and the subformulas we
-    sketched before. We shall call it $D$ ; it is again a hash map that binds every formula $x$ to
+    sketched before. We shall call it $D$ (resp. $C$) ; it is again a hash map that binds every formula 
+    $x$ to
     another hash map that itself binds every formula $y$ to a set of formulas that is of the shape
     $\{y\vee z,z\vee y\in SF\mid\forall z,(z,x)\in P\}$. To make things we just said clearer, let us sum 
-    up the types of each structure.
+    up the types of each structure ;
     \begin{align*}
 	    P&:\mathcal{P}(SF\times SF)\\
-	    A^\diamond,\overrightarrow{P},\overleftarrow{P}&:SF\rightarrow\mathcal{P}(SF)\\
-	    B^\diamond,C,D&:SF\rightarrow SF\rightarrow\mathcal{P}(SF)\\
+	    A^\star,\overrightarrow{P},\overleftarrow{P}&:SF\rightarrow\mathcal{P}(SF)\\
+	    B^\star,C,D&:SF\rightarrow SF\rightarrow\mathcal{P}(SF)\\
     \end{align*}
-    The algorithm~\ref{alg2} exhibits the pseudo-code of everything that has been said.
+    where $\star\in\{\wedge,\vee\}$. The algorithm~\ref{alg2} exhibits the pseudo-code of everything 
+    that has been said.
     \begin{algorithm}
-	    \caption{Cubical forward proof-search algorithm for OL with axioms}
+	    \caption{Cubical forward proof search algorithm for OL with axioms}
 	    \label{alg2}
 	    \begin{algorithmic}
 		\State Let $SF$ be the set of the subformulas of a given problem $(\mathcal{A},S)$ in NNF
 		\State Let $AF\subseteq SF$ be the set of subformulas of the axioms
 		    \State $P,\overrightarrow{P},\overleftarrow{P}\gets\varnothing$
-		    \State $A^\diamond\gets x\mapsto\{\phi\in SF\mid\exists y,\phi=x\diamond y\text{ or }
-		    \phi=y\diamond x\}$
-		    \State $B^\diamond\gets x\mapsto y\mapsto \{x\diamond y,y\diamond x\}\in
+		    \State $A^\star\gets x\mapsto\{\phi\in SF\mid\exists y,\phi=x\star y\text{ or }
+		    \phi=y\star x\}$
+		    \State $B^\star\gets x\mapsto y\mapsto \{x\star y,y\star x\}\in
 		    \mathcal{P}(SF)\setminus\varnothing$
 		\State $C\gets\varnothing$
 		\State $D\gets\varnothing$
@@ -971,32 +998,38 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 		    \EndFor
 	    \end{algorithmic}
     \end{algorithm}
-
     \begin{theorem}
 	    The algorithm~\ref{alg2} is correct.
     \end{theorem}
     \begin{proof}
-	    Before the first call to the function \textsf{add}, the maps $A^\diamond$ and $B^\diamond$
+	    Before the first call to the function \textsf{add}, the maps $A^\star$ and $B^\star$
 	    are built and are not meant to be changed afterwards. The map $C$ (resp. $D$) is empty 
 	    before the
 	    first call to \textsf{add}. Each time a call to \textsf{add} is performed with the sequent 
 	    $(a,b)$ as argument,
-	    if the sequent is the goal we seek, then the algorithm stops, returning true. Otherwise,
-	    it first updates $C$ (resp . $D$) by making the union of conjunctive (resp. disjunctive) 
+	    if the sequent is the goal we seek, then the algorithm returns true, making itself stop. 
+	    If the sequent already belongs to $P$, it means that the algorithm already deduced sequents 
+	    from it, therefore it returns false. Otherwise,
+	    it first updates the structures. To $P$, it adds the sequent, therefore, at each iteration,
+	    every sequent belonging to $P$ is valid. To $\overrightarrow{P}(a)$ it adds $b$, therefore,
+	    at each iteration, forall $x\in SF$ and $y\in\overrightarrow{P}(x)$ the sequent $(x,y)$ is 
+	    valid. Dually for $\overleftarrow{P}$. 
+	    It updates $C$ (resp. $D$) by doing the union of conjunctive (resp. disjunctive) 
 	    formulas of the form $b\wedge k$ or $k\wedge b$ (resp. $a\vee k$ or $k\vee a$) that may be 
 	    proven if, at some point, $(a,k)$ (resp. $(b, k)$) is proven. Here, the $k$ lie in
-	    the set of keys of $B^\wedge(b)$, therefore it covers all the subformulas. 
-	    %At each iteration, $C$ has, as an invariant, that 
+	    the set of keys of $B^\wedge(b)$, therefore it covers all the subformulas.  
 	    After having updated $C$ (resp. $D$),
-	    the algorithm will deduce new sequents. Remark that the order we do this, meaning the
-	    update, then the deduction, is of no importance for the proof. However it becomes 
-	    interesting for
-	    optimizations, for instance, to make a tail-recursive program. There is two kind of sequents
+	    the algorithm will deduce new sequents. 
+	    %Remark that the order we do this, meaning the
+	    %update, then the deduction, is of no importance for the proof. However it becomes 
+	    %interesting for
+	    %optimizations, for instance, to make a tail-recursive program. 
+	    There is two kind of sequents
 	    we can deduce, $(\phi,b)$ and $(a,\phi)$ where $\phi\in SF$. Let us handle both of the cases.
 	    \begin{enumerate}
 		    \item
 			    for the case $(\phi,b)$, the $\phi$ formulas belong to the union of 
-			    $A^\wedge(a)$, $D(b)(a)$ and $\overleftarrow{P}(a)$. At this state of the 
+			    $A^\wedge(a)$, $D(b)(a)$ and $\overleftarrow{P}(a)$. At this stage of the 
 			    algorithm, $A^\wedge(a)$,
 			    as we said before, is not altered and therefore, it is still of the shape
 			    $\{\phi\in SF\mid\exists y,\phi=a\wedge y\text{ or }\phi=y\wedge a\}$. Hence,
@@ -1007,7 +1040,7 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 			    Finally, $\overleftarrow{P}(a)$ contains every $\phi$ such that $(\phi,a)$
 			    is proven and, since we just added $(a,b)$, adding $(\phi,b)$ is correct.
 			    However, $(\phi,b)$ might have already been proven ; the check, to avoid
-			    cycles, is done in the begining of the function \textsf{add}. Thus, there is
+			    cycles, is done in the beginning of the function \textsf{add}. Thus, there is
 			    no cycles.
 			    %There is another place where the algorithm manages to add sequent of that
 			    %shape to $P$, this is namely for the cut rule. This takes effect only when
@@ -1050,7 +1083,7 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 	    three sets takes time in $\mathcal{O}(n)$. Because of the first guard, checking whether the
 	    sequent is proven or not, the function \textsf{add} is called at most the number of possible 
 	    sequents of the shape $a^L,b^R$ where $a,b\in SF$. Thus, there is at most $|SF|^2$ call to 
-	    \textsf{add}. Summing up everything, the algorithm has a worst case time complexity in
+	    \textsf{add}. In overall, the algorithm has a worst case time complexity in 
 	    $\mathcal{O}(n^3)$.
 
 %	    Let us start the complexity analysis by the one premise rules, that is to say, the right 
@@ -1146,14 +1179,15 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 		    \end{tabular}
 	    \end{center}
 	    \caption{Time (in seconds) to solve the equivalence problem, comparing our algorithm with
-	    SAT solvers}
+	    different SAT solvers}
 	    \label{benchmark_equiv}
     \end{table}
     Depending on the instance of the multiplier circuit, OLSC
-    performs 20 to 40 times faster than CryptoMinisat, 6 to 17 time faster than CaDiCaL. For Kissat,
+    performs 20 to 40 times faster than CryptoMinisat and 7 to 17 time faster than CaDiCaL. 
+    Concerning Kissat,
     OLSC is slower on the four first instances and has a speed up from 5 to 40 percent on the two last.
-    We also made a benchmark on the same instances but changing one renaming, making them wrong \ie
-    the SAT solvers find an assignation and OLSC is not able to find any proof.
+    We also made a benchmark on the same instances randomly changing a variable renaming, making them 
+    wrong \ie the SAT solvers find an assignation and OLSC is not able to find any proof.
     % TODO:
     % - give an explicit procedure of encoding of the equivalence problem into OL
 
@@ -1166,21 +1200,21 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
     species on which the OL normalization will certainly lead to a net speed-up of the SAT solver. 
     The second improvement naturally 
     concerns the proof algorithm itself. For some class of hard problems, one can show that it can be
-    encoded in the OL framework and, hence, provable by our proof-search algorithm. Therefore, it
+    encoded in the OL framework and, hence, provable by our proof search algorithm. Therefore, it
     would be interesting for SAT solvers to provide an interface that allows one to specify the
     encoding of a given class of problems into the OL framework. Our algorithm would then be called
     when the solver has to deal with such class of problems. There is also improvements to do on the
-    algorithm~\ref{alg2} itself. The main problem is the data structure $B^\diamond$ because it enforces
+    algorithm~\ref{alg2} itself. The main problem is the data structure $B^\star$ because it enforces
     us not to use an ADT able to flatten the formula, leading to stack overflows of the data structure
-    when the formula is too big. Therefore, we would rather need to type $B^\diamond$ with 
+    when the formula is too big. Therefore, we would rather need to type $B^\star$ with 
     $SF\text{ list}\rightarrow\mathcal{P}(SF)$. This maps an arbitrary list of subformulas to
-    the set of every existing permutation that lies in $SF$, according to the operator $\diamond$.
+    the set of every existing permutation that lies in $SF$, according to the operator $\star$.
     \section{Conclusion} 
     Along this work, we investigated several ways to improve the performance of SAT solvers using
     some properties of \textit{orthologic}. On one hand, we have shown that preprocessing the formulas 
     using the OL normal form could, in average, speed up the solving. On the other hand, we provided an
-    efficient proof-search algorithm to prove statements within the OL proof system.
-    \section{Appendix}
+    efficient proof search algorithm to prove statements within the OL proof system.
+    %\section{Appendix}
     \bibliographystyle{alpha}
     \bibliography{ol}
 \end{document}
