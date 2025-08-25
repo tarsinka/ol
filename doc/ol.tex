@@ -49,9 +49,11 @@
 	\subsection*{General context}
 	With the advent of computers in the second half of the XXth century, the question whether 
 	machines are able or not to \textit{reason} and to automatically prove mathematical statements 
-	rised from its ashes. In the 60s, a convenient method has been exhibited by Davis and Putnam
+	rised from its ashes. In the 60s, a convenient method has been exhibited by Davis and 
+	Putnam~\cite{10.1145/321033.321034}
 	and has proved itself in term of efficiency so far. It consists in taking the negation of the
-	formula one wants to prove and to transform it into conjunctive normal form. This normal form 
+	formula one wants to prove and to transform it into conjunctive normal form (CNF for short). 
+	This normal form 
 	allows the computer to efficiently derive a proof using a couple of logical rules only. Then, if 
 	the algorithm finds an assignement to the derived formula, it means that the original problem 
 	is not valid. Otherwise, it is valid. Doing all that, we are in fact
@@ -62,11 +64,15 @@
 	rely on that method and do optimizations on the data structures they use.
 	The conjunctive normal form is, of course,
 	not the only normal form that has been tried to get better performance to automatic reasonning.
-	In the beginning of the 2000s, researchers tried to take advantage of the negation normal form.
-	The singularity of this normal form is that the negation operator is only applied on litterals.
+	In the beginning of the 2000s, researchers tried to take advantage of the negation normal form 
+	(NNF for short),
+	arguing that the transformation to CNF could induce a lot a redundancy in the resulted 
+	formula~\cite{5227064}.
+	The singularity of the NNF is that the negation operator is only applied on litterals.
 	According to rewriting rules of boolean algebra, one can derive the negative normal form of a
-	given formula in linear time. However, those proposed algorithms never reached performances
-	comparable to the former algorithms, based on the conjunctive normal form. 
+	given formula in linear time. 
+	%However, those proposed algorithms never reached performances
+	%comparable to the former algorithms, based on the conjunctive normal form. 
 	%The following report
 	%is about a way to improve the current state of the art of modern SAT solvers in two different
 	%ways. On one hand, we look to improve the preprocessing of formulas by applying a new normal
@@ -102,7 +108,7 @@
 
 	\subsection*{Your contribution}
 	The contributions of this report are two fold. First, we show that the use of another normal
-	form, before transforming a formula into CNF, can improve the solving performances of SAT 
+	form, before transforming a formula into CNF, can improve the solving performances of modern SAT 
 	solvers.
 	Second, we improve an algorithm for orthologic proof search. Despite having the same
 	theoretical complexity, the original version would essentially always hit the worst case whereas
@@ -122,8 +128,9 @@
 	%Pay special attention to the description  of the \emph{scientific} approach.
 
 	\subsection*{Arguments supporting its validity}
-	The results we have gathered come with benchmark evaluation on different kind of problems.
-	Concerning the proof search algorithm we exhibited, we provide, in addition to the benchmarking, 
+	To support our claims, we evaluated our algorithms on different benchmarks, borrowed or generated
+	by ourselves.
+	Concerning the proof search algorithm, we provide, in addition to the evaluation on benchmarks, 
 	proofs of its correctness and of its worst case complexity. Furthermore, let us note that our
 	results do not rely on any kind of assumptions but rather on work of previous peers on the topic.
 
@@ -134,9 +141,10 @@
 
 	\subsection*{Summary and future work}
 	To sum up, we propose two ways to improve the current state of the art of SAT solvers. 
-	On way handles the preprocessing of the formulas while the other handles the proof search
+	One way handles the preprocessing of the formulas while the other handles the proof search
 	algorithm for certain class of problems. Next, the immediate step to do is
-	to implement our algorithm within an existing SAT solver, such as Minisat or Kissat, and test
+	to implement our preprocessing and our proof search algorithm within an existing SAT solver, 
+	such as Minisat or Kissat, and test
 	whether the performances are improved, compared to the original version. There are many questions
 	that stand further. The main one is to study the lifting to first order logic and the way to 
 	adapt our results to specific theories such as bit vectors, lists, arrays etc.
@@ -537,7 +545,7 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 			    6pipe & 354s & 200s&0.77\\
 			    \hline
 		    \end{tabular}
-		    \caption{Time (in seconds) for CaDiCaL to decide}
+		    \caption{Time (in seconds) for Minisat to decide}
 	    \end{center}
     \end{table}
     \section{The equivalence problem}
@@ -711,18 +719,23 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 	    \State $E\gets E\cup\{\langle\{(\Gamma,\Gamma)\},s\rangle\}\cup
 	    \{\langle\{(\Delta,\Delta)\},s\rangle\}$ \textit{hyperedges for the weakening rule}
 	    \State $W\gets W\cup\{(\Gamma,\Gamma),(\Delta,\Delta)\}$
-	    \If {$\Delta=\neg\phi^\circ$}
-	    \State $E\gets E\cup\{\langle\{(\Gamma,\phi^\circ)\},s\rangle\}$
+	    \If {$\Delta=\neg\phi^\diamond$}
+	    \State $E\gets E\cup\{\langle\{(\Gamma,\phi^\diamond)\},s\rangle\}$
+	    \State $W\gets W\cup\{(\Gamma,\phi^\diamond)\}$
 	    \ElsIf {$\Delta=(\phi\vee\psi)^L$}
 	    \State $E\gets E\cup\{\langle\{(\Gamma,\phi^L),(\Gamma,\psi^L)\},s\rangle\}$
+	    \State $W\gets W\cup\{(\Gamma,\phi^L),(\Gamma,\psi^L)\}$
 	    \ElsIf {$\Delta=(\phi\wedge\psi)^R$}
 	    \State $E\gets E\cup\{\langle\{(\Gamma,\phi^R),(\Gamma,\psi^R)\},s\rangle\}$
+	    \State $W\gets W\cup\{(\Gamma,\phi^R),(\Gamma,\psi^R)\}$
 	    \ElsIf {$\Delta=(\phi\vee\psi)^R$}
 	    \State $E\gets E\cup\{\langle\{(\Gamma,\phi^R)\},s\rangle\}\cup
 	    \{\langle\{(\Gamma,\psi^R)\},s\rangle\}$
+	    \State $W\gets W\cup\{(\Gamma,\phi^R),(\Gamma,\psi^R)\}$ 
 	    \ElsIf {$\Delta=(\phi\wedge\psi)^L$}
 	    \State $E\gets E\cup\{\langle\{(\Gamma,\phi^L)\},s\rangle\}\cup
 	    \{\langle\{(\Gamma,\psi^L)\},s\rangle\}$
+	    \State $W\gets W\cup\{(\Gamma,\phi^L),(\Gamma,\psi^L)\}$
 	    \EndIf
 	    \State \textit{the dual matching is applied to }$\Gamma$ 
 	    \State {$E\gets E\cup\bigcup\limits_{a\in A^*}
@@ -884,7 +897,7 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
     and we shall introduce a new one. We can split the algorithm in three important parts, namely ;
     the cut rule, the rules with one premise and the rules with two premises. 
     \begin{remark}
-	For the sake of legibility in what follows, we will write $(a,b)$ for the sequent $a^L,b^R$. 
+	For the sake of legibility in what follows, we may write $(a,b)$ for the sequent $a^L,b^R$. 
 	    Furthermore,
 	    we will write $SF$, the set of subformulas of our problem and $AF$, the set of formulas
 	    that compose the axioms. By $P$, we denote the set of proven sequents.
@@ -1150,11 +1163,11 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
     The testing procedure is the
     following. First, we parse the given AIGER file and we store the data in a convenient algebraic
     data type. Then, from this data, we build the circuit equivalence by renaming the intermediate
-    variables (the ones that name the operations). From the resulting formula, we compute, on one hand, 
+    variables (the ones that name the subformulas). From the resulting formula, we compute, on one hand, 
     the conjunctive normal form of its negation, applying the usual Tseitin's transformation and, on 
     the other hand, we
     encode it into OL with axioms. Finally, we can give that encoding to our algorithm, so it tries
-    to prove it. On the other side, we run a SAT solver on the produced CNF. Note that, if it terminates,
+    to prove it. Aside, we run a SAT solver on the produced CNF. Note that, if it terminates,
     it must yield unsatisfiability, because the equivalence formula is valid. Otherwise, it means that
     the encoding is wrong. 
     In our case, we expect the solver to yield unsat and our algorithm to find a proof.
@@ -1182,11 +1195,10 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 	    different SAT solvers}
 	    \label{benchmark_equiv}
     \end{table}
-    Depending on the instance of the multiplier circuit, OLSC
-    performs 20 to 40 times faster than CryptoMinisat and 7 to 17 time faster than CaDiCaL. 
-    Concerning Kissat,
-    OLSC is slower on the four first instances and has a speed up from 5 to 40 percent on the two last.
-    We also made a benchmark on the same instances randomly changing a variable renaming, making them 
+    Depending on the instance of the multiplier circuit, OLSC performs 20 to 40 times faster than 
+    CryptoMinisat and 7 to 17 time faster than CaDiCaL. Concerning Kissat, OLSC is slower on the four 
+    first instances and has a speed up from 5 to 40 percent on the two last.
+    Evaluation has been made on the same instances, randomly changing a variable renaming, making them 
     wrong \ie the SAT solvers find an assignation and OLSC is not able to find any proof.
     % TODO:
     % - give an explicit procedure of encoding of the equivalence problem into OL
