@@ -1,16 +1,15 @@
-type formula =
+open Logic
+
+type olsc_formula =
   | Lit of fingerprint * bool
   | Var of fingerprint * bool * int
-  | Not of fingerprint * formula
-  | And of fingerprint * formula list
-  | Or of fingerprint * formula list
+  | Not of fingerprint * olsc_formula
+  | And of fingerprint * olsc_formula list
+  | Or of fingerprint * olsc_formula list
 
-and fingerprint = {
-  uid : int; (* mutable sym : formula option;
-  mutable sfs : formula list; *)
-}
+and fingerprint = { uid : int }
 
-type lab_formula = Left of formula | Right of formula
+type lab_formula = Left of olsc_formula | Right of olsc_formula
 type sequent = lab_formula * lab_formula
 
 module Vars = Set.Make (Int)
@@ -42,6 +41,8 @@ let str_annot = function
 
 let fm_uid = ref 1
 let var_counter = ref 1000
+
+let reset () = fm_uid := 1; var_counter := 1
 
 let fresh_counter c =
   c := !c + 1;
@@ -82,7 +83,7 @@ let stm_to_formula stm =
   make_imp axioms (sequent_to_formula stm.goal)
 
 module FormulaSet = Set.Make (struct
-  type t = formula
+  type t = olsc_formula
 
   let compare s t = Stdlib.compare (get_uid s) (get_uid t)
 end)
@@ -101,21 +102,20 @@ let subformulas f =
 
 let label_formula s = Left s, Right s
 
-let rec aig2fm af_fm_map equivs pol af =
+let rec aig_formula_to_olsc_formula af_fm_map equivs pol af =
   match Hashtbl.find_opt af_fm_map (pol, af) with
   | Some s -> s
   | None ->
       let s =
         match af with
-        | Aiger.Lit b -> make_lit (b && pol)
-        | Aiger.Var v when pol -> make_var (not (Hashtbl.mem equivs v)) v
-        | Aiger.Var _ -> make_not (aig2fm af_fm_map equivs true af)
-        | Aiger.Not s -> aig2fm af_fm_map equivs (not pol) s
-        | Aiger.And (_, ss) ->
+        | AIGLit b -> make_lit (b && pol)
+        | AIGVar v when pol -> make_var (not (Hashtbl.mem equivs v)) v
+        | AIGVar _ -> make_not (aig_formula_to_olsc_formula af_fm_map equivs true af)
+        | AIGNot s -> aig_formula_to_olsc_formula af_fm_map equivs (not pol) s
+        | AIGAnd (_, ss) ->
             let bd = fresh_counter var_counter in
-            (* Printf.printf "%d\n" bd; *)
             let var = make_var false bd in
-            let ss = List.map (aig2fm af_fm_map equivs pol) ss in
+            let ss = List.map (aig_formula_to_olsc_formula af_fm_map equivs pol) ss in
             let ts = if pol then make_and ss else make_or ss in
             Hashtbl.replace equivs bd (var, ts);
             var
@@ -144,61 +144,6 @@ let rec subst_fm name_map f =
       let b, ss = help ss in
       if b then Some (make_or ss) else None
 
-(* Forward proof mode *)
-
-type label_uid = int * int
-type sequent_uid = label_uid * label_uid
-
-module UidSet = Set.Make (struct
-  type t = sequent_uid
-
-  let compare = Stdlib.compare
-end)
-
-type hp_vertice = int * int
-
-module HypergraphSet = Set.Make (struct
-  type t = hp_vertice
-
-  (*
-    The pair is commutative: (a, b) = (b, a)
-  *)
-
-  let compare = Stdlib.compare
-end)
-
-(*
-  An hyperedge is the data of two sets of vertices,
-  the source [src] and the destination [dst], an arity 
-  [aty] that is the cardinal of [src] and a proven 
-  coefficient [cfc].
-*)
-
-(* type hp_edge = { mutable src : HypergraphSet.t; dst : hp_vertice }
-type hp_node = { uid : hp_vertice; seq : sequent; mutable child : hp_edge list }
-type hypergraph = { nodes : (hp_vertice, hp_node) Hashtbl.t }
-
-(*
-  String utils for hypergraphs
-*)
-
-let str_hyperedge he =
-  let str_uid hs =
-    String.concat ", "
-      (List.map (fun (x, y) -> string_of_int x ^ "_" ^ string_of_int y) hs)
-  in
-  Printf.sprintf "({%s}, {%s})"
-    (str_uid (HypergraphSet.elements he.src))
-    (str_uid [ he.dst ])
-
-let str_hypernode hn =
-  let a, b = hn.uid in
-  Printf.sprintf "[%d_%d : %s]" a b (str_seq hn.seq)
-
-let str_hypergraph hg =
-  "Hypernodes::\n"
-  ^ Hashtbl.fold (fun _ v acc -> str_hypernode v ^ "\n" ^ acc) hg.nodes "" *)
-
 (*
   Crafts the unique identifier for sequents taking the unique
   identifier of each annotated formula and making the ordered
@@ -219,10 +164,6 @@ type beta = (int, (int, FmUidSet.t) Hashtbl.t) Hashtbl.t
 
 type forward_ds = {
   proven : (int * int, bool) Hashtbl.t;
-  subs_map : (int, FmUidSet.t) Hashtbl.t;
-  ax_subs : (int, bool) Hashtbl.t;
-  non_proven_left : alpha;
-  non_proven_right : alpha;
   p : alpha;
   co_p : alpha;
   a : alpha; (* A structure for disjunction *)
@@ -240,21 +181,12 @@ let hash_map_set h key =
   match Hashtbl.find_opt h key with None -> FmUidSet.empty | Some s -> s
 
 let double_hash_set h key_a key_b = hash_map_set (hash_map h key_a) key_b
-let print_fm_uid_set s = FmUidSet.iter (fun x -> Printf.printf "%d\n" x) s
 
-let str_fuset s =
-  "{"
-  ^ String.concat ", " (FmUidSet.fold (fun x acc -> string_of_int x :: acc) s [])
-  ^ "}"
+(*
+  ================= Main proof-search algorithm ===================
+*)
 
-let print_beta x =
-  Hashtbl.iter
-    (fun k v ->
-      Printf.printf "%d ->\n" k;
-      Hashtbl.iter (fun k' v' -> Printf.printf "%d -> %s\n" k' (str_fuset v')) v)
-    x
-
-let rec add fm_map qu goal_uid ds =
+let rec add qu goal_uid ds =
   let update ref h x =
     Hashtbl.iter
       (fun k v ->
@@ -268,18 +200,17 @@ let rec add fm_map qu goal_uid ds =
 
   match qu with
   | [] -> false
-  | seq :: tl when Hashtbl.mem ds.proven seq -> add fm_map tl goal_uid ds
+  | seq :: tl when Hashtbl.mem ds.proven seq -> add tl goal_uid ds
   | seq :: tl ->
       Hashtbl.replace ds.proven seq true;
       let a, b = seq in
 
       if goal_uid = seq then (
-        Printf.printf "Proves (%s, %s)!\n%!"
+        (* Printf.printf "Proves (%s, %s)!\n%!"
           (str_fm false (Hashtbl.find fm_map a))
-          (str_fm false (Hashtbl.find fm_map b));
+          (str_fm false (Hashtbl.find fm_map b)); *)
         true)
       else (
-
         (*
           Update for the cut rule
         *)
@@ -314,49 +245,57 @@ let rec add fm_map qu goal_uid ds =
         let tl =
           List.fold_right
             (fun (_tag, set_fn, x, fn_pair) acc ->
-              FmUidSet.fold
-                (fun s acc ->
-                  (*Queue.push (fn_pair s) qu*)
-                  fn_pair s :: acc)
-                (set_fn x) acc)
+              FmUidSet.fold (fun s acc -> fn_pair s :: acc) (set_fn x) acc)
             set_li tl
         in
-        add fm_map tl goal_uid ds)
+        add tl goal_uid ds)
 
 (*
   Conversion to shape formula in order to order conjunctive normalization
   and DIMACS writings.
 *)
 
-let rec fm_to_sfm pol f =
-  match f with
-  | Lit (_, b) -> Gen.new_lit (-1) (b && pol)
-  | Var (_, _, v) -> Gen.new_lit v pol
-  | Not (_, f) -> fm_to_sfm (not pol) f
-  | Or (_, ss) when pol -> Gen.new_or (List.map (fm_to_sfm pol) ss)
-  | And (_, ss) when pol -> Gen.new_and (List.map (fm_to_sfm pol) ss)
-  | And (_, ss) -> Gen.new_or (List.map (fm_to_sfm pol) ss)
-  | Or (_, ss) -> Gen.new_and (List.map (fm_to_sfm pol) ss)
+let rec olsc_formula_to_formula pol = function
+  | Lit (_, b) -> Logic.Lit (b && pol)
+  | Var (_, _, v) when pol -> Logic.Var (fresh_formula_uid (), v)
+  | Var _ as s -> Logic.Not (fresh_formula_uid (), olsc_formula_to_formula (not pol) s)
+  | Not (_, s) -> olsc_formula_to_formula (not pol) s
+  | And (_, ss) when pol ->
+      Logic.And (fresh_formula_uid (), List.map (olsc_formula_to_formula pol) ss)
+  | Or (_, ss) when pol ->
+      Logic.Or (fresh_formula_uid (), List.map (olsc_formula_to_formula pol) ss)
+  | And (_, ss) ->
+      Logic.Or (fresh_formula_uid (), List.map (olsc_formula_to_formula pol) ss)
+  | Or (_, ss) ->
+      Logic.And (fresh_formula_uid (), List.map (olsc_formula_to_formula pol) ss)
 
-let start afm =
-  Printf.printf "OLSC\n%!";
-  let _top, af = afm in
+(*
+    Checks the equivalence problem for the given AIG circuit.
+*)
 
+let equivalence_checking algo dimacs_output af =
   let equivs = Hashtbl.create 8 in
   let af_fm_map = Hashtbl.create 8 in
 
-  let fm = aig2fm af_fm_map equivs true af in
+  let fm = aig_formula_to_olsc_formula af_fm_map equivs true af in
   let fm_uid = get_uid fm in
+
+  (*
+    Renaming the intermediate variables.
+  *)
 
   let rename = Hashtbl.create 8 in
   Hashtbl.iter
     (fun k _ ->
       let fresh_vn = fresh_counter var_counter in
-      (* Printf.printf "%d -> %d\n" k fresh_vn; *)
       Hashtbl.replace rename k (fresh_vn, make_var false fresh_vn))
     equivs;
 
   let equivs' = Hashtbl.create 8 in
+
+  (*
+      Crafting the equivalent formula.
+  *)
 
   let gm =
     Hashtbl.fold
@@ -374,6 +313,10 @@ let start afm =
 
   let ax_subs = Hashtbl.create 8 in
 
+  (*
+    Builds the axiomatization for the equivalence problem modulo renaming.
+  *)
+
   let axioms, subs =
     Hashtbl.fold
       (fun _ (var, v) (acc, subs) ->
@@ -383,9 +326,6 @@ let start afm =
         Hashtbl.replace ax_subs (get_uid var) true;
         Hashtbl.replace ax_subs (get_uid v) true;
 
-        (*
-          To refine in order to handle right disjunction as well
-        *)
         let sfs = subformulas v in
         let subs = FormulaSet.union subs sfs in
         let subs = FormulaSet.add var subs in
@@ -396,28 +336,25 @@ let start afm =
 
   let axioms = FormulaSet.fold (fun s acc -> (Left s, Right s) :: acc) subs axioms in
 
-  let stm = { axioms; goal = Left fm, Right gm } in
-
   (*
-    Conjunctive normal form transformation for the SAT solver
+    If the [dimacs_output] flag is set, outputs the CNF formula of equivalence
+    in DIMACS format.
   *)
-  let fm = stm_to_formula stm in
 
-  (* Negation of the formula to be declared UNSAT by the SAT solver *)
-  let sfm = fm_to_sfm false fm in
-  let cnf = Gen.cnf sfm in
-
-  Printf.printf "Writing the CNF\n%!";
-  let cnf_file = open_out "aig.cnf" in
-  Printf.fprintf cnf_file "%s\n" (Translator.write_dimacs cnf);
+  (if dimacs_output then
+     let stm = { axioms; goal = Left fm, Right gm } in
+     let fm = stm_to_formula stm in
+     (* Negation of the formula to be declared UNSAT by the SAT solver *)
+     let cnf = cnf_formula_to_clauses (cnf (olsc_formula_to_formula false fm)) in
+     Dimacs.write "aig.cnf" cnf);
 
   let a, co_a = Hashtbl.create 8, Hashtbl.create 8 in
   let b, co_b = Hashtbl.create 8, Hashtbl.create 8 in
 
   (*
-    The following [partition] function does a partition of the subformula set
-    of the given problem.
+    Preprocessing the input so it fits in the datastructure.
   *)
+
   let partition h uid ss =
     List.iter
       (fun s ->
@@ -452,9 +389,6 @@ let start afm =
       Hashtbl.replace bh y hx)
   in
 
-  let non_proven_left = Hashtbl.create 8 in
-  let non_proven_right = Hashtbl.create 8 in
-
   FormulaSet.iter
     (fun s ->
       let uid = get_uid s in
@@ -483,33 +417,18 @@ let start afm =
   FmUidSet.iter (fun uid -> Hashtbl.replace subs_map uid subs_uid) subs_uid;
 
   let ds =
-    {
-      proven;
-      non_proven_left;
-      non_proven_right;
-      p;
-      co_p;
-      subs_map;
-      ax_subs;
-      a;
-      co_a;
-      b;
-      co_b;
-      c = Hashtbl.create 8;
-      d = Hashtbl.create 8;
-    }
+    { proven; p; co_p; a; co_a; b; co_b; c = Hashtbl.create 8; d = Hashtbl.create 8 }
   in
 
-  (* Printf.printf "Formula --\n%s\n" (str_fm false fm); *)
-  (* Printf.printf "Subaxioms --\n";
-  Hashtbl.iter (fun _ v -> Printf.printf "%s\n" (str_fm false v)) ax_subs; *)
-  Printf.printf "Subformulas --\n";
-  FormulaSet.iter (fun s -> Printf.printf "%s\n" (str_fm true s)) subs;
-  Printf.printf "Axioms --\n";
+  (* Printf.printf "Axioms --\n";
   List.iter (fun s -> Printf.printf "%s\n" (str_seq s)) axioms;
   Printf.printf "Proving (%s, %s)\n%!"
     (str_fm false (Hashtbl.find formula_map fm_uid))
-    (str_fm false (Hashtbl.find formula_map gm_uid));
+    (str_fm false (Hashtbl.find formula_map gm_uid)); *)
+
+  (*
+    Calling the forward proof search algorithm with, as arguments, the axioms.
+  *)
 
   List.exists
     (fun ax ->
@@ -517,6 +436,26 @@ let start afm =
       let a, b = forget_label a, forget_label b in
       let ax_seq = get_uid a, get_uid b in
 
-      add formula_map [ ax_seq ] (fm_uid, gm_uid) ds)
+      algo [ ax_seq ] (fm_uid, gm_uid) ds)
     axioms
 
+(*
+      Runs the given algorithm [algo] on the set of test-circuit.
+*)
+
+let benchmark circuit_names algo =
+  let rec run = function
+    | [] -> ()
+    | fn :: tl ->
+        let _, aig_box = Aiger.parse fn in
+        List.iteri
+          (fun k (_, aig_formula) ->
+            reset ();
+            let current_time = Sys.time () in
+            let res = equivalence_checking algo false aig_formula in
+            let delta_time = Sys.time () -. current_time in
+            Printf.printf "[benchmark] %s-%d -- %b -- %fs\n%!" fn k res delta_time)
+          aig_box;
+        run tl
+  in
+  run circuit_names

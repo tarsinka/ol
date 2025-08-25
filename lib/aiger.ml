@@ -1,11 +1,6 @@
-type header = { m : int; i : int; l : int; o : int; a : int } [@@deriving show]
+open Logic
 
-type aig_formula =
-  | Lit of bool
-  | Var of int
-  | And of int * aig_formula list
-  | Not of aig_formula
-[@@deriving show]
+type header = { m : int; i : int; l : int; o : int; a : int } [@@deriving show]
 
 let parse_header ln =
   match String.split_on_char ' ' ln with
@@ -23,35 +18,21 @@ let rec read_uint in_ch =
   let by = input_byte in_ch in
   if Int.shift_right_logical by 7 = 0 then by else by - 128 + (128 * read_uint in_ch)
 
-(* let rec flatten = function
-  | And (k, cnj) ->
-      let cnj =
-        List.fold_right
-          (fun s acc ->
-            let s = flatten s in
-            match s with And (_, cnj) -> cnj @ acc | _ -> s :: acc)
-          cnj []
-      in
-      And (k, cnj)
-  | Not f -> Not (flatten f)
-  | f -> f *)
-
-let parse in_ch =
+let parse filename =
+  let in_ch = open_in filename in
   let hdr = parse_header (input_line in_ch) in
   let map = Hashtbl.create hdr.m in
 
-  Hashtbl.replace map 0 (Lit false);
-  Hashtbl.replace map 1 (Lit true);
-
-  let cur_line = ref 1 in
+  Hashtbl.replace map 0 (AIGLit false);
+  Hashtbl.replace map 1 (AIGLit true);
 
   let rec inputs = function
     | 0 -> ()
     | k ->
         let ind = 2 * k in
-        let var = Var ind in
+        let var = AIGVar ind in
         Hashtbl.replace map ind var;
-        Hashtbl.replace map (ind + 1) (Not var);
+        Hashtbl.replace map (ind + 1) (AIGNot var);
         inputs (k - 1)
   in
   inputs hdr.i;
@@ -64,7 +45,6 @@ let parse in_ch =
     | 0 -> []
     | k ->
         let s = input_line in_ch in
-        cur_line := !cur_line + 1;
         let i = int_of_string s in
         i :: outputs (k - 1)
   in
@@ -82,20 +62,13 @@ let parse in_ch =
         let rha = l - delta_a in
         let rhb = rha - delta_b in
 
-        if rha >= l || rhb > rha then failwith "Parsing error";
+        if rha >= l || rhb > rha then failwith "[aig] parsing error";
         let ma = Hashtbl.find map rha in
         let mb = Hashtbl.find map rhb in
 
-        (* let cnj =
-          match ma, mb with
-          | And (_, la), And (_, lb) -> la @ lb
-          | And (_, la), _ -> mb :: la
-          | _, And (_, lb) -> ma :: lb
-          | _ -> [ ma; mb ]
-        in *)
-        let an = And (l, [ma ; mb]) in
+        let an = AIGAnd (l, [ma ; mb]) in
         Hashtbl.replace map l an;
-        Hashtbl.replace map (l + 1) (Not an);
+        Hashtbl.replace map (l + 1) (AIGNot an);
         ands (k - 1)
   in
   ands hdr.a;

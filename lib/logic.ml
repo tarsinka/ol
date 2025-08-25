@@ -1,428 +1,247 @@
-(*
-  Classical formula
-*)
+type clause = int list
+type cnf_formula = { clauses : clause list; amount_vars : int; amount_clauses : int }
+
+type 'a min_formula =
+  | MLit of bool
+  | MVar of 'a * int * bool
+  | MAnd of 'a * 'a min_formula list * bool
+[@@deriving show]
+
+type aig_formula =
+  | AIGLit of bool
+  | AIGVar of int
+  | AIGAnd of int * aig_formula list
+  | AIGNot of aig_formula
 
 type formula =
   | Lit of bool
-  | Var of int
-  | Neg of ol_fm
-  | And of ol_fm list
-  | Or of ol_fm list
+  | Var of int * int
+  | Not of int * formula
+  | And of int * formula list
+  | Or of int * formula list
+
+let incr x =
+  x := !x + 1;
+  !x
+
+let formula_uid = ref 0
+let fresh_formula_uid () = incr formula_uid
+
+let formula_uid = function
+  | Lit true -> -1
+  | Lit false -> -2
+  | Var (uid, _) | Not (uid, _) | And (uid, _) | Or (uid, _) -> uid
+
+let rec show_min_formula = function
+  | MLit true -> "1"
+  | MLit false -> "0"
+  | MVar (_, vn, pol) ->
+      let neg = if pol then "" else "~" in
+      neg ^ string_of_int vn
+  | MAnd (_, ch, pol) ->
+      let sep = if pol then " & " else " | " in
+      "(" ^ String.concat sep (List.map show_min_formula ch) ^ ")"
+
+let rec show_formula = function
+  | Lit true -> "1"
+  | Lit false -> "0"
+  | Var (_, vn) -> string_of_int vn
+  | Not (_, s) -> "~" ^ show_formula s
+  | And (_, ch) -> "(" ^ String.concat " & " (List.map show_formula ch) ^ ")"
+  | Or (_, ch) -> "(" ^ String.concat " | " (List.map show_formula ch) ^ ")"
 
 (*
-  Reduced formula
-*)
-and rformula = RLit of bool | RVar of int * bool | RAnd of ol_rm list * bool
-and bio_fm = { u_key : int; mutable neg : ol_fm option; mutable nnf : ol_rm option }
-
-and bio_rm = {
-  u_key : int;
-  mutable f : ol_fm option;
-  mutable red : bool option;
-  mutable bnf : ol_rm option;
-  mutable znf : ol_rm option;
-  mutable enf : ol_rm option;
-}
-
-and ol_fm = bio_fm * formula
-and ol_rm = bio_rm * rformula
-
-(*
-    Constants
-*)
-
-let rec bot_ol = { u_key = 0; neg = Some top_ol; nnf = None }, Lit false
-and top_ol = { u_key = 1; neg = Some bot_ol; nnf = None }, Lit true
-
-let rbot_ol =
-  ( { u_key = 0; f = Some bot_ol; red = None; bnf = None; znf = None; enf = None },
-    RLit false )
-
-let rtop_ol =
-  ( { u_key = 1; f = Some top_ol; red = None; bnf = None; znf = None; enf = None },
-    RLit true )
-
-let get_rlit_bio = function false -> rbot_ol | _ -> rtop_ol
-let unique_key_formula = ref 0
-let unique_key_rformula = ref 0
-
-let reset () =
-  unique_key_formula := 0;
-  unique_key_rformula := 0
-
-let new_unique_key u_key =
-  u_key := !u_key + 1;
-  !u_key
-
-let comp_rel = Stdlib.compare
-
-module Rel = Set.Make (struct
-  type t = int * int * bool
-
-  let compare = comp_rel
-end)
-
-let rels = ref Rel.empty
-let init s = { u_key = new_unique_key unique_key_formula; neg = None; nnf = None }, s
-
-let init_rm s =
-  ( {
-      u_key = new_unique_key unique_key_formula;
-      f = None;
-      red = None;
-      bnf = None;
-      znf = None;
-      enf = None;
-    },
-    s )
-
-(*
-    Get the list of variables of a formula
+  Returns a list of the identifiers of variable occuring in
+  the formula [s].
 *)
 
 module Vars = Set.Make (Int)
 
-let rec vars_of (_, rf) =
-  match rf with
-  | RLit _ -> Vars.empty
-  | RVar (i, _) -> Vars.singleton i
-  | RAnd (li, _) ->
-      List.fold_right (fun el acc -> Vars.union acc (vars_of el)) li Vars.empty
-
-(*
-    Semantics for rformulas
-*)
-
-let rec assign (_, rf) hs =
-  match rf with
-  | RLit _ -> ()
-  | RVar (i, pol) -> Hashtbl.replace hs i pol
-  | RAnd (li, _) -> List.iter (fun el -> assign el hs) li
-
-let rec interpret assgn (_, rm) =
-  match rm with
-  | RLit pol -> pol
-  | RVar (i, pol) ->
-      let va = Hashtbl.find assgn i in
-      if pol then va else not va
-  | RAnd (li, true) -> List.for_all (interpret assgn) li
-  | RAnd (li, false) -> List.exists (interpret assgn) li
-
-let rec str_pp_rformula (_, rm) =
-  match rm with
-  | RLit true -> "t"
-  | RLit false -> "f"
-  | RVar (i, true) -> Format.sprintf "%d" i
-  | RVar (i, false) -> Format.sprintf "~%d" i
-  | RAnd (li, pol) ->
-      let sep = if pol then " ∧ " else " v " in
-      let str_li = List.fold_right (fun el acc -> str_pp_rformula el :: acc) li [] in
-      "(" ^ String.concat sep str_li ^ ")"
-
-(*
-    Flattens the formula
-*)
-
-let rec flatten (rb, rm) =
-  ( rb,
-    match rm with
-    | RAnd (li, pol) ->
-        let res =
-          List.fold_right
-            (fun el acc ->
-              let elb, el = flatten el in
-              match el with
-              | RAnd (li, p) when p = pol -> li @ acc
-              | _ -> (elb, el) :: acc)
-            li []
+let vars s =
+  let mem = Hashtbl.create 8 in
+  let rec go s =
+    let uid = formula_uid s in
+    match Hashtbl.find_opt mem uid with
+    | Some vrs -> vrs
+    | None ->
+        let vrs =
+          match s with
+          | Lit _ -> Vars.empty
+          | Var (_, vn) -> Vars.singleton vn
+          | Not (_, t) -> go t
+          | And (_, ch) | Or (_, ch) ->
+              List.fold_left (fun acc c -> Vars.union acc (go c)) Vars.empty ch
         in
-        RAnd (res, pol)
-    | _ -> rm )
+        Hashtbl.replace mem uid vrs;
+        vrs
+  in
+  go s
 
 (*
-    Decides whether f < g.
-    f and g being elements of a free latice.
-
-    rformula -> rformula -> bool
+  Simplifies the formula [s] by rewriting it according to boolean
+  algebra rules.
 *)
 
-let rec lat_ord (f : ol_rm) (g : ol_rm) =
-  let fb, fm = f in
-  let gb, gm = g in
+let simpl s =
+  let rec part vars ops = function
+    | [] -> vars, ops
+    | (Var _ as hd) :: tl | (Not _ as hd) :: tl -> part (hd :: vars) ops tl
+    | Or (_, ch) :: tl -> part (ch @ vars) ops tl
+    | (And _ as hd) :: tl -> part vars (hd :: ops) tl
+    | _ :: tl -> part vars ops tl
+  in
+  let or_dist v and_s =
+    List.fold_left (fun acc x -> Or (fresh_formula_uid (), x :: v) :: acc) [] and_s
+  in
+  match s with
+  | Or (_, ch) ->
+      let vars, ops = part [] [] ch in
+      if List.length ops = 0 then Or (fresh_formula_uid (), vars)
+      else
+        let y =
+          List.fold_left
+            (fun acc op ->
+              match op with And (_, ch) -> or_dist vars ch @ acc | _ -> acc)
+            [] ops
+        in
+        And (fresh_formula_uid (), y)
+  | _ -> s
+
+let flatten_and ch =
+  List.fold_left
+    (fun acc c -> match c with And (_, c_ch) -> c_ch @ acc | _ -> c :: acc)
+    [] ch
+
+(*
+  Negates the formula [s]
+*)
+
+let rec negate = function
+  | Lit b -> Lit (not b)
+  | Var _ as s -> Not (fresh_formula_uid (), s)
+  | Not (_, t) -> t
+  | And (_, ch) -> Or (fresh_formula_uid (), List.map negate ch)
+  | Or (_, ch) -> And (fresh_formula_uid (), List.map negate ch)
+
+(*
+  Transformation to conjunctive normal form (CNF)
+  using the Tseitin transformation.
+*)
+
+let key_binding = ref 0
+
+let cnf s =
+  let binding = Hashtbl.create 8 in
+  let formula_keys = Hashtbl.create 8 in
 
   (*
-        If the relation f < g has already been computed, returns it.
-    *)
-  match Rel.find_first_opt (fun (i, j, _) -> i = fb.u_key && j = gb.u_key) !rels with
-  | Some (_, _, b) -> b
-  | None ->
-      let res =
-        match fm, gm with
-        | RLit false, _ | _, RLit true -> true
-        | RLit true, _ | _, RLit false -> false
-        | RVar (i, p), RVar (j, q) -> p = q && i = j
-        | RAnd (li_f, true), RAnd (li_g, false) ->
-            List.exists (fun s -> lat_ord s g) li_f || List.exists (lat_ord f) li_g
-        | RAnd (li, false), _ -> List.for_all (fun s -> lat_ord s g) li
-        | _, RAnd (li, true) -> List.for_all (lat_ord f) li
-        | RAnd (li, true), _ -> List.exists (fun s -> lat_ord s g) li
-        | _, RAnd (li, false) -> List.exists (lat_ord f) li
-      in
+    Sets the lower bound for the newly generated variables.
+  *)
+  let vrs = vars s in
+  if Vars.cardinal vrs = 0 then s
+  else
+    let sup_var = Vars.max_elt vrs in
+    key_binding := sup_var;
 
-      (*
-            Adds the newly computed relation
-        *)
-      rels := Rel.add (fb.u_key, gb.u_key, res) !rels;
-      res
+    Printf.printf "sup %d\n%!" sup_var;
+
+    let rec bind s =
+      let uid = formula_uid s in
+      match Hashtbl.find_opt formula_keys uid with
+      | Some k -> k
+      | None ->
+          let k =
+            match s with
+            | Lit _ | Var _ -> s
+            | Not (_, t) ->
+                let new_t = bind t in
+                let key = incr key_binding in
+                Hashtbl.replace binding key (Not (fresh_formula_uid (), new_t));
+                Var (fresh_formula_uid (), key)
+            | And (_, ch) ->
+                let new_ch = List.map bind ch in
+                let key = incr key_binding in
+                Hashtbl.replace binding key (And (fresh_formula_uid (), new_ch));
+                Var (fresh_formula_uid (), key)
+            | Or (_, ch) ->
+                let new_ch = List.map bind ch in
+                let key = incr key_binding in
+                Hashtbl.replace binding key (Or (fresh_formula_uid (), new_ch));
+                Var (fresh_formula_uid (), key)
+          in
+          Hashtbl.replace formula_keys uid k;
+          k
+    in
+    let root = bind s in
+    let and_ch =
+      Hashtbl.fold
+        (fun k v acc ->
+          let var_k = Var (fresh_formula_uid (), k) in
+          let left_imp = Or (fresh_formula_uid (), [ negate var_k; v ]) in
+          let right_imp = Or (fresh_formula_uid (), [ negate v; var_k ]) in
+          let left_imp_simpl = simpl left_imp in
+          let right_imp_simpl = simpl right_imp in
+          (* Printf.printf "%d <-> %s\n%s :: %s\n%s :: %s\n" k (show_formula v)
+          (show_formula left_imp) (show_formula left_imp_simpl) (show_formula right_imp)
+          (show_formula right_imp_simpl); *)
+          left_imp_simpl :: right_imp_simpl :: acc)
+        binding [ root ]
+    in
+    And (fresh_formula_uid (), flatten_and and_ch)
 
 (*
-    Negates a classical formula.
+  Converts the CNF formula [s] to the clause type.
 *)
 
-let rec negate f =
-  let fb, fm = f in
-  let nb = { u_key = new_unique_key unique_key_formula; neg = Some f; nnf = None } in
-  let res =
-    match fm with
-    | Lit true -> bot_ol
-    | Lit false -> top_ol
-    | Var _ -> nb, Neg f
-    | Neg f_a -> f_a
-    | And li -> nb, Or (List.map get_negate li)
-    | Or li -> nb, And (List.map get_negate li)
+let cnf_formula_to_clauses s : cnf_formula =
+  let to_clause acc c =
+    match c with
+    | Var (_, vn) -> [ vn ] :: acc
+    | Not (_, Var (_, vn)) -> [ vn * -1 ] :: acc
+    | Or (_, ch) ->
+        if List.exists (( = ) (Lit true)) ch then acc
+        else
+          List.fold_left
+            (fun acc s ->
+              match s with
+              | Var (_, vn) -> vn :: acc
+              | Not (_, Var (_, vn)) -> (-1 * vn) :: acc
+              | _ -> failwith "A variable was expected!")
+            [] ch
+          :: acc
+    | _ -> failwith "[error] a disjunction was expected"
   in
-  fb.neg <- Some res;
-  res
-
-and get_negate (fb, fm) =
-  match fb.neg with
-  | Some v -> v
-  | None ->
-      let neg = negate (fb, fm) in
-      fb.neg <- Some neg;
-      neg
-
-(*
-    Simplification rules on rformulae
-*)
-
-let rec simpl_rformula rf =
-  let rb, rm = rf in
-  match rm with
-  | RAnd ([], pol) -> rb, RLit pol
-  | RAnd ([ x ], _) -> simpl_rformula x
-  | RAnd (li, pol) ->
-      let res =
-        List.fold_right
-          (fun (b, r) acc ->
-            match r with RLit p when p = pol -> acc | _ -> simpl_rformula (b, r) :: acc)
-          li []
-      in
-      rb, RAnd (res, pol)
-  | _ -> rf
-
-(*
-    Takes a formula type and returns its NNF normalization.
-    T_OL(X) -> T_L(X + X')
-*)
-
-let rec negative_normal_form f =
-  let _, fm = f in
-  let rb =
-    {
-      u_key = new_unique_key unique_key_rformula;
-      f = Some f;
-      red = None;
-      bnf = None;
-      znf = None;
-      enf = None;
-    }
+  let clauses =
+    match s with
+    | Lit false -> [ [] ]
+    | Lit true -> [ [ 1 ] ]
+    | Var (_, vn) -> [ [ vn ] ]
+    | And (_, ch) -> List.fold_left (fun acc c -> to_clause acc c) [] ch
+    | _ -> failwith "[error] the formula is not in CNF"
   in
-  let rf =
-    match fm with
-    | Lit true -> rtop_ol
-    | Lit false -> rbot_ol
-    | Var i -> rb, RVar (i, true)
-    | Neg (neg_fb, neg_fm) -> (
-        match neg_fm with
-        | Var i -> rb, RVar (i, false)
-        | _ -> get_nnf (get_negate (neg_fb, neg_fm)))
-    | And li -> rb, RAnd (List.map get_nnf li, true)
-    | Or li -> rb, RAnd (List.map get_nnf li, false)
-  in
-  let res = simpl_rformula rf in
-  res
-
-and get_nnf (fb, fm) =
-  match fb.nnf with
-  | Some v -> v
-  | None ->
-      let nnf = negative_normal_form (fb, fm) in
-      fb.nnf <- Some nnf;
-      nnf
-
-let rec rm_to_fm (_, rm) =
-  match rm with
-  | RLit true -> top_ol
-  | RLit false -> bot_ol
-  | RVar (i, true) -> init (Var i)
-  | RVar (i, false) -> init (Neg (init (Var i)))
-  | RAnd (li, true) -> init (And (List.map get_fm li))
-  | RAnd (li, false) -> init (Or (List.map get_fm li))
-
-and get_fm (rb, rm) =
-  match rb.f with
-  | Some v -> v
-  | None ->
-      let fm = rm_to_fm (rb, rm) in
-      rb.f <- Some fm;
-      fm
+  { clauses; amount_vars = !key_binding; amount_clauses = List.length clauses }
 
 (*
-    Checks whether f is reduced or not, ille est in R or not
+  Converts AIG formula to formula.
 *)
 
-let rec reduced rf =
-  let _, rm = rf in
-  match rm with
-  | RAnd (li, pol) ->
-      List.for_all
-        (fun s ->
-          let neg = get_negate (get_fm s) in
-          let nnf = get_nnf neg in
-          let r = if pol then lat_ord rf nnf else lat_ord nnf rf in
-          (not r) && get_reduced s)
-        li
-  | _ -> true
-
-and get_reduced rf =
-  let rb, _ = rf in
-  match rb.red with
-  | Some v -> v
-  | None ->
-      let res = reduced rf in
-      rb.red <- Some res;
-      res
-
-(*
-    T_L(X + X') -> R
-*)
-
-let rec beta_normal_form rf =
-  let _, rm = rf in
-  let res =
-    match rm with
-    | RAnd (li, pol) ->
-        let rr = simpl_rformula (init_rm (RAnd (List.map get_beta li, pol))) in
-        if get_reduced rr then rr else get_rlit_bio (not pol)
-    | _ -> rf
+let aig_formula_to_formula s =
+  let mem = Hashtbl.create 8 in
+  let rec transform pol s =
+    match Hashtbl.find_opt mem (pol, s) with
+    | Some t -> t
+    | None ->
+        let res =
+          match s with
+          | AIGLit b -> if pol then Lit b else Lit (not pol)
+          | AIGVar v when pol -> Var (fresh_formula_uid (), v)
+          | AIGVar _ -> negate (transform (not pol) s)
+          | AIGNot t -> transform (not pol) t
+          | AIGAnd (_, ch) when pol ->
+              And (fresh_formula_uid (), List.map (transform pol) ch)
+          | AIGAnd (_, ch) -> Or (fresh_formula_uid (), List.map (transform pol) ch)
+        in
+        Hashtbl.replace mem (pol, s) res;
+        res
   in
-  res
-
-and get_beta rf =
-  let rb, _ = rf in
-  match rb.bnf with
-  | Some v -> v
-  | None ->
-      let beta = beta_normal_form rf in
-      rb.bnf <- Some beta;
-      beta
-
-(*
-    Computes the ortholattice order
-    T_OL(X) -> bool
-*)
-
-let ol_ord f g = lat_ord (get_beta (get_nnf f)) (get_beta (get_nnf g))
-
-(*
-    Computes the zeta-normal-form. The formula needs to be
-    flatten
-*)
-
-let rec zeta_normal_form rf =
-  let _, rm = rf in
-  let or_pred = lat_ord rf in
-  let and_pred e = lat_ord e rf in
-
-  let rec aux pol li acc flag =
-    let pred = if pol then or_pred else and_pred in
-    match li with
-    | [] -> acc, flag
-    | ((_, RAnd (l, p)) as hd) :: tl when p <> pol -> (
-        let el_opt = List.find_opt pred l in
-        match el_opt with
-        | Some el -> aux pol tl (el :: acc) true
-        | None -> aux pol tl (hd :: acc) flag)
-    | hd :: tl -> aux pol tl (hd :: acc) flag
-  in
-
-  let res =
-    match rm with
-    | RAnd (li, pol) ->
-        let r, flag = aux pol li [] false in
-        if flag then get_zeta (init_rm (RAnd (r, pol)))
-        else simpl_rformula (init_rm (RAnd (List.map get_zeta li, pol)))
-    | _ -> rf
-  in
-  res
-
-and get_zeta rf =
-  let rb, _ = rf in
-  match rb.znf with
-  | Some v -> v
-  | None ->
-      let zeta = zeta_normal_form rf in
-      rb.znf <- Some zeta;
-      zeta
-
-(*
-    Computes the antichain normal form
-    R -> R
-*)
-
-let rec eta_normal_form rf =
-  let rec exists_gt s l =
-    match l with
-    | [] -> false
-    | a :: _ when lat_ord s a -> true
-    | _ :: tl -> exists_gt s tl
-  in
-  let rec help l acc flag =
-    match l with
-    | [] -> acc, flag
-    | s :: tl when flag -> help tl (s :: acc) flag
-    | s :: tl ->
-        if exists_gt s tl || exists_gt s acc then help tl acc true
-        else help tl (s :: acc) flag
-  in
-
-  let rb, rm = rf in
-  match rb.enf with
-  | Some v -> v
-  | None ->
-      let res =
-        match rm with
-        | RAnd (li, false) ->
-            let r, fl = help li [] false in
-            if fl then eta_normal_form (init_rm (RAnd (r, false)))
-            else simpl_rformula (init_rm (RAnd (List.map get_eta li, false)))
-        | _ -> rf
-      in
-      res
-
-and get_eta rf =
-  let rb, _ = rf in
-  match rb.enf with
-  | Some v -> v
-  | None ->
-    let eta = eta_normal_form rf in
-    rb.enf <- Some eta;
-    eta
-
-(*
-    Computes the OL normal form of a formula f.
-    formula -> rformula
-*)
-
-let ol_normal_form f = get_eta (get_zeta (flatten (get_beta (get_nnf f))))
+  transform true s
