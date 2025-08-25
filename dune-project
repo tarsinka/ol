@@ -7,9 +7,9 @@
 (source
  (github username/reponame))
 
-(authors "Author Name <author@example.com>")
+(authors "Vladislas de Haldat <vlad.hdt@proton.me>")
 
-(maintainers "Maintainer Name <maintainer@example.com>")
+(maintainers "Vladislas de Haldat <vlad.hdt@proton.me>")
 
 (license LICENSE)
 
@@ -17,8 +17,8 @@
 
 (package
  (name ol)
- (synopsis "A short synopsis")
- (description "A longer description")
+ (synopsis "Algorithms for orthologic.")
+ (description "This library implements the algorithms of normalization and of proof search for the framework of orthologic")
  (depends ocaml alcotest ppx)
  (tags
   ("add topics" "to describe" your project)))
