@@ -7,8 +7,7 @@ type olnf_finger_print = {
     [uid] the unique identifier
     [inv] the negation of the formula, initially null
     [nrm] the normal form of the formula, initially null
-    [smr] the hash table mapping, for each formula, whether it is smaller
-    [lgr] the hash table mapping, for each formula, whether it is larger 
+    [lt] the hash table mapping, for each formula, whether it is smaller
   *)
   uid : int;
   mutable inv : olnf_finger_print min_formula option;
@@ -29,57 +28,73 @@ let fingerprint_min_formula = function
   | MLit _ -> unit_finger_print ()
   | MVar (fg, _, _) | MAnd (fg, _, _) -> fg
 
+let get_olnf_formula_uid s =
+  let s_fg = fingerprint_min_formula s in
+  s_fg.uid
+
+let negation = function
+  | MLit pol -> MLit (not pol)
+  | MVar (_, name, pol) -> MVar (fresh_olnf_finger_print (), name, not pol)
+  | MAnd (_, children, pol) -> MAnd (fresh_olnf_finger_print (), children, not pol)
+
 (*
   Transforms the AIG formula to a OLNF formula 
   with the shape of a DAG (with memoization).
 
-  Remark that it is an implicit transformation
-  to negative normal form (NNF).
+  It is an implicit transformation to negative 
+  normal form (NNF).
 *)
 
 let aig_formula_to_olnf_formula s =
   let mem = Hashtbl.create 8 in
   let rec transform pol s =
     match Hashtbl.find_opt mem (pol, s) with
-    | Some t -> t
+    | Some t -> if pol then t else negation t
     | None ->
         let res =
           match s with
-          | AIGLit b -> if pol then MLit b else MLit (not b)
+          | AIGLit b -> MLit (b = pol)
           | AIGVar v -> MVar (fresh_olnf_finger_print (), v, pol)
           | AIGNot t -> transform (not pol) t
           | AIGAnd (_, ch) ->
-              MAnd (fresh_olnf_finger_print (), List.map (transform pol) ch, pol)
+              MAnd (fresh_olnf_finger_print (), List.map (transform true) ch, pol)
         in
-        Hashtbl.replace mem (pol, s) res;
+        if pol then Hashtbl.replace mem (pol, s) res
+        else Hashtbl.replace mem (pol, s) (negation res);
         res
   in
   transform true s
 
 let olnf_formula_to_formula s =
-  let mem = Hashtbl.create 8 in
-  let rec transform s =
+  let mem_pos = Hashtbl.create 8 in
+  let mem_neg = Hashtbl.create 8 in
+  let rec transform pol s =
     let s_fg = fingerprint_min_formula s in
-    match Hashtbl.find_opt mem s_fg.uid with
-    | Some t -> t
-    | None ->
+    match
+      Hashtbl.find_opt mem_pos s_fg.uid, Hashtbl.find_opt mem_neg s_fg.uid, s_fg.inv
+    with
+    | Some t, _, _ when pol -> t
+    | None, _, Some inv when pol && Hashtbl.mem mem_neg (get_olnf_formula_uid inv) ->
+        Hashtbl.find mem_neg (get_olnf_formula_uid inv)
+    | _, Some t, _ when not pol -> t
+    | _, None, Some inv when (not pol) && Hashtbl.mem mem_pos (get_olnf_formula_uid inv)
+      ->
+        Hashtbl.find mem_pos (get_olnf_formula_uid inv)
+    | _ ->
         let res =
           match s with
-          | MLit b -> Lit b
-          | MVar (_, vn, true) -> Var (fresh_formula_uid (), vn)
-          | MVar (_, vn, false) -> negate (Var (fresh_formula_uid (), vn))
-          | MAnd (_, ch, true) -> And (fresh_formula_uid (), List.map transform ch)
-          | MAnd (_, ch, false) -> Or (fresh_formula_uid (), List.map transform ch)
+          | MLit b -> Lit (b = pol)
+          | MVar (_, vn, s_pol) when s_pol = pol -> Var (fresh_formula_uid (), vn)
+          | MVar _ -> Not (fresh_formula_uid (), transform (not pol) s)
+          | MAnd (_, ch, s_pol) when s_pol = pol ->
+              And (fresh_formula_uid (), List.map (transform true) ch)
+          | MAnd (_, ch, _) -> Or (fresh_formula_uid (), List.map (transform false) ch)
         in
-        Hashtbl.replace mem s_fg.uid res;
+        if pol then Hashtbl.replace mem_pos s_fg.uid res
+        else Hashtbl.replace mem_neg s_fg.uid res;
         res
   in
-  transform s
-
-let negation = function
-  | MLit pol -> MLit (not pol)
-  | MVar (_, name, pol) -> MVar (fresh_olnf_finger_print (), name, not pol)
-  | MAnd (_, children, pol) -> MAnd (fresh_olnf_finger_print (), children, not pol)
+  transform true s
 
 let inverse s =
   let fg = fingerprint_min_formula s in
@@ -93,47 +108,46 @@ let inverse s =
       inv
 
 (*
-    Checks the order [s] < [t]
+    Checks the order [s] < [t] in OL.
 *)
 
 let rec lat_ord s t =
   let s_fg = fingerprint_min_formula s in
   let t_fg = fingerprint_min_formula t in
 
-  match Hashtbl.find_opt s_fg.lt t_fg.uid with
-  | Some b -> b
-  | None ->
-      let r =
-        match s, t with
-        | MLit s_pol, MLit t_pol -> (not s_pol) || t_pol
-        | MLit pol, _ -> not pol
-        | _, MLit pol -> pol
-        | MVar (_, s_nm, s_pol), MVar (_, t_nm, t_pol) -> s_nm = t_nm && s_pol = t_pol
-        | _, MAnd (_, ch, true) -> List.for_all (lat_ord s) ch
-        | MAnd (_, ch, false), _ -> List.for_all (fun c -> lat_ord (inverse c) t) ch
-        | MVar _, MAnd (_, ch, false) -> List.exists (fun c -> lat_ord s (inverse c)) ch
-        | MAnd (_, ch, true), MVar _ -> List.exists (fun c -> lat_ord c t) ch
-        | MAnd (_, s_ch, true), MAnd (_, t_ch, false) ->
-            List.exists (fun c -> lat_ord c t) s_ch
-            || List.exists (fun c -> lat_ord s (inverse c)) t_ch
-      in
-      Hashtbl.replace s_fg.lt t_fg.uid r;
-      Printf.printf "%s < %s ? %b\n" (show_min_formula s) (show_min_formula t) r;
-      r
+  if s_fg.uid = t_fg.uid then true
+  else
+    match Hashtbl.find_opt s_fg.lt t_fg.uid with
+    | Some b -> b
+    | None ->
+        let r =
+          match s, t with
+          | MLit s_pol, MLit t_pol -> (not s_pol) || t_pol
+          | MLit pol, _ -> not pol
+          | _, MLit pol -> pol
+          | MVar (_, s_nm, s_pol), MVar (_, t_nm, t_pol) -> s_nm = t_nm && s_pol = t_pol
+          | _, MAnd (_, ch, true) -> List.for_all (lat_ord s) ch
+          | MAnd (_, ch, false), _ -> List.for_all (fun c -> lat_ord (inverse c) t) ch
+          | MVar _, MAnd (_, ch, false) -> List.exists (fun c -> lat_ord s (inverse c)) ch
+          | MAnd (_, ch, true), MVar _ -> List.exists (fun c -> lat_ord c t) ch
+          | MAnd (_, s_ch, true), MAnd (_, t_ch, false) ->
+              List.exists (fun c -> lat_ord c t) s_ch
+              || List.exists (fun c -> lat_ord s (inverse c)) t_ch
+        in
+        Hashtbl.replace s_fg.lt t_fg.uid r;
+        r
 
 let simplify children pol =
   let s = MAnd (fresh_olnf_finger_print (), children, pol) in
-  Printf.printf "zeta %s\n" (show_min_formula s);
   let rec zeta s_ch =
     match s_ch with
     | MLit _ | MVar _ -> [ s_ch ]
     | MAnd (_, ch, true) -> ch
     | MAnd (_, ch, false) when pol -> (
-        (* let ch = List.map inverse ch in *)
+        let ch = List.map inverse ch in
         let gt_opt = List.find_opt (lat_ord s) ch in
         match gt_opt with None -> [ s_ch ] | Some gt -> zeta gt)
     | MAnd (_, ch, false) -> (
-        let ch = List.map inverse ch in
         let gt_opt = List.find_opt (fun c -> lat_ord c s) ch in
         match gt_opt with None -> [ s_ch ] | Some gt -> zeta (inverse gt))
   in
@@ -148,14 +162,10 @@ let simplify children pol =
           lat_ord_filter acc tl
         else lat_ord_filter (curr :: acc) tl
   in
-  let r =
-    match lat_ord_filter [] new_ch with
-    | [] -> MLit pol
-    | [ c ] -> if pol then c else inverse c
-    | res -> MAnd (fresh_olnf_finger_print (), List.rev res, pol)
-  in
-  Printf.printf "= %s\n" (show_min_formula r);
-  r
+  match lat_ord_filter [] new_ch with
+  | [] -> MLit pol
+  | [ c ] -> if pol then c else inverse c
+  | res -> MAnd (fresh_olnf_finger_print (), res, pol)
 
 let contradiction_check s =
   match s with
@@ -171,8 +181,7 @@ let rec olnf s =
       let nrm =
         match s with
         | MLit _ -> s
-        | MVar (_, vn, true) -> MVar (fresh_olnf_finger_print (), vn, true)
-        | MVar (_, _, false) -> inverse (olnf (inverse s))
+        | MVar (_, vn, pol) -> MVar (fresh_olnf_finger_print (), vn, pol)
         | MAnd (_, ch, pol) ->
             let simp = simplify (List.map olnf ch) pol in
             if contradiction_check simp then MLit (not pol) else simp
