@@ -33,8 +33,8 @@ let formula_uid = function
   | Var (uid, _) | Not (uid, _) | And (uid, _) | Or (uid, _) -> uid
 
 let rec show_min_formula = function
-  | MLit true -> "1"
-  | MLit false -> "0"
+  | MLit true -> "t"
+  | MLit false -> "f"
   | MVar (_, vn, pol) ->
       let neg = if pol then "" else "~" in
       neg ^ string_of_int vn

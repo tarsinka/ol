@@ -302,7 +302,6 @@ let equivalence_checking algo dimacs_output af =
       (fun k (xv, v) acc ->
         Hashtbl.replace equivs' k (xv, v);
         let k', var = Hashtbl.find rename k in
-        (* Printf.printf "%s\n" (str_fm true var); *)
         (match subst_fm rename v with
         | None -> Hashtbl.replace equivs' k' (var, v)
         | Some s -> Hashtbl.replace equivs' k' (var, s));
@@ -441,6 +440,10 @@ let equivalence_checking algo dimacs_output af =
 
 (*
       Runs the given algorithm [algo] on the set of test-circuit.
+      The [algo] function takes as arguments :
+      - (int * int) list the stack of sequents that have to be added to the set of proven ones
+      - forward_ds the datastructure of the algorithm
+      It returns true if a proof has been found, false otherwise.
 *)
 
 let benchmark circuit_names algo =
