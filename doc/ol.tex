@@ -545,7 +545,7 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
 			    6pipe & 354s & 200s&0.77\\
 			    \hline
 		    \end{tabular}
-		    \caption{Time (in seconds) for Minisat to decide}
+		    \caption{Time (in seconds) for CaDiCaL to decide}
 	    \end{center}
     \end{table}
     \section{The equivalence problem}
@@ -1167,7 +1167,7 @@ every node/.style = {circle, minimum size=1.2em, inner sep=0pt}
     the conjunctive normal form of its negation, applying the usual Tseitin's transformation and, on 
     the other hand, we
     encode it into OL with axioms. Finally, we can give that encoding to our algorithm, so it tries
-    to prove it. Aside, we run a SAT solver on the produced CNF. Note that, if it terminates,
+    to prove it. On the other side, we run a SAT solver on the produced CNF. Note that, if it terminates,
     it must yield unsatisfiability, because the equivalence formula is valid. Otherwise, it means that
     the encoding is wrong. 
     In our case, we expect the solver to yield unsat and our algorithm to find a proof.
