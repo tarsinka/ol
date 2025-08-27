@@ -32,10 +32,21 @@ let get_olnf_formula_uid s =
   let s_fg = fingerprint_min_formula s in
   s_fg.uid
 
-let negation = function
-  | MLit pol -> MLit (not pol)
-  | MVar (_, name, pol) -> MVar (fresh_olnf_finger_print (), name, not pol)
-  | MAnd (_, children, pol) -> MAnd (fresh_olnf_finger_print (), children, not pol)
+let inverse s =
+  let fg = fingerprint_min_formula s in
+  match fg.inv with
+  | Some t -> t
+  | None ->
+      let inv =
+        match s with
+        | MLit pol -> MLit (not pol)
+        | MVar (_, name, pol) -> MVar (fresh_olnf_finger_print (), name, not pol)
+        | MAnd (_, children, pol) -> MAnd (fresh_olnf_finger_print (), children, not pol)
+      in
+      let inv_fg = fingerprint_min_formula inv in
+      fg.inv <- Some inv;
+      inv_fg.inv <- Some s;
+      inv
 
 (*
   Transforms the AIG formula to a OLNF formula 
@@ -49,18 +60,19 @@ let aig_formula_to_olnf_formula s =
   let mem = Hashtbl.create 8 in
   let rec transform pol s =
     match Hashtbl.find_opt mem (pol, s) with
-    | Some t -> if pol then t else negation t
+    | Some t -> if pol then t else inverse t
     | None ->
         let res =
           match s with
           | AIGLit b -> MLit (b = pol)
           | AIGVar v -> MVar (fresh_olnf_finger_print (), v, pol)
           | AIGNot t -> transform (not pol) t
-          | AIGAnd (_, ch) ->
-              MAnd (fresh_olnf_finger_print (), List.map (transform true) ch, pol)
+          | AIGAnd (_, u, v) ->
+              MAnd
+                (fresh_olnf_finger_print (), [ transform true u; transform true v ], pol)
         in
         if pol then Hashtbl.replace mem (pol, s) res
-        else Hashtbl.replace mem (pol, s) (negation res);
+        else Hashtbl.replace mem (pol, s) (inverse res);
         res
   in
   transform true s
@@ -95,17 +107,6 @@ let olnf_formula_to_formula s =
         res
   in
   transform true s
-
-let inverse s =
-  let fg = fingerprint_min_formula s in
-  match fg.inv with
-  | Some t -> t
-  | None ->
-      let inv = negation s in
-      let inv_fg = fingerprint_min_formula inv in
-      fg.inv <- Some inv;
-      inv_fg.inv <- Some s;
-      inv
 
 (*
     Checks the order [s] < [t] in OL.
@@ -144,9 +145,8 @@ let simplify children pol =
     | MLit _ | MVar _ -> [ s_ch ]
     | MAnd (_, ch, true) -> ch
     | MAnd (_, ch, false) when pol -> (
-        let ch = List.map inverse ch in
-        let gt_opt = List.find_opt (lat_ord s) ch in
-        match gt_opt with None -> [ s_ch ] | Some gt -> zeta gt)
+        let gt_opt = List.find_opt (fun c -> lat_ord s (inverse c)) ch in
+        match gt_opt with None -> [ s_ch ] | Some gt -> zeta (inverse gt))
     | MAnd (_, ch, false) -> (
         let gt_opt = List.find_opt (fun c -> lat_ord c s) ch in
         match gt_opt with None -> [ s_ch ] | Some gt -> zeta (inverse gt))

@@ -112,10 +112,10 @@ let rec aig_formula_to_olsc_formula af_fm_map equivs pol af =
         | AIGVar v when pol -> make_var (not (Hashtbl.mem equivs v)) v
         | AIGVar _ -> make_not (aig_formula_to_olsc_formula af_fm_map equivs true af)
         | AIGNot s -> aig_formula_to_olsc_formula af_fm_map equivs (not pol) s
-        | AIGAnd (_, ss) ->
+        | AIGAnd (_, u, v) ->
             let bd = fresh_counter var_counter in
             let var = make_var false bd in
-            let ss = List.map (aig_formula_to_olsc_formula af_fm_map equivs pol) ss in
+            let ss = List.map (aig_formula_to_olsc_formula af_fm_map equivs pol) [ u ; v ] in
             let ts = if pol then make_and ss else make_or ss in
             Hashtbl.replace equivs bd (var, ts);
             var

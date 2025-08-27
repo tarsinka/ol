@@ -10,7 +10,7 @@ type 'a min_formula =
 type aig_formula =
   | AIGLit of bool
   | AIGVar of int
-  | AIGAnd of int * aig_formula list
+  | AIGAnd of int * aig_formula * aig_formula
   | AIGNot of aig_formula
 
 type formula =
@@ -116,12 +116,25 @@ let flatten_and ch =
   Negates the formula [s]
 *)
 
-let rec negate = function
-  | Lit b -> Lit (not b)
-  | Var _ as s -> Not (fresh_formula_uid (), s)
-  | Not (_, t) -> t
-  | And (_, ch) -> Or (fresh_formula_uid (), List.map negate ch)
-  | Or (_, ch) -> And (fresh_formula_uid (), List.map negate ch)
+let negate ?(mem = Hashtbl.create 8) s =
+  (* let mem = Hashtbl.create 8 in *)
+  let rec transform s =
+    let uid = formula_uid s in
+    match Hashtbl.find_opt mem uid with
+    | Some t -> t
+    | None ->
+        let r =
+          match s with
+          | Lit b -> Lit (not b)
+          | Var _ as s -> Not (fresh_formula_uid (), s)
+          | Not (_, t) -> t
+          | And (_, ch) -> Or (fresh_formula_uid (), List.map transform ch)
+          | Or (_, ch) -> And (fresh_formula_uid (), List.map transform ch)
+        in
+        Hashtbl.replace mem uid r;
+        r
+  in
+  transform s
 
 (*
   Transformation to conjunctive normal form (CNF)
@@ -181,9 +194,6 @@ let cnf s =
           let right_imp = Or (fresh_formula_uid (), [ negate v; var_k ]) in
           let left_imp_simpl = simpl left_imp in
           let right_imp_simpl = simpl right_imp in
-          (* Printf.printf "%d <-> %s\n%s :: %s\n%s :: %s\n" k (show_formula v)
-          (show_formula left_imp) (show_formula left_imp_simpl) (show_formula right_imp)
-          (show_formula right_imp_simpl); *)
           left_imp_simpl :: right_imp_simpl :: acc)
         binding [ root ]
     in
@@ -227,21 +237,118 @@ let cnf_formula_to_clauses s : cnf_formula =
 
 let aig_formula_to_formula s =
   let mem = Hashtbl.create 8 in
-  let rec transform pol s =
-    match Hashtbl.find_opt mem (pol, s) with
+  let rec transform s =
+    match Hashtbl.find_opt mem s with
     | Some t -> t
     | None ->
         let res =
           match s with
-          | AIGLit b -> if pol then Lit b else Lit (not pol)
-          | AIGVar v when pol -> Var (fresh_formula_uid (), v)
-          | AIGVar _ -> negate (transform (not pol) s)
-          | AIGNot t -> transform (not pol) t
-          | AIGAnd (_, ch) when pol ->
-              And (fresh_formula_uid (), List.map (transform pol) ch)
-          | AIGAnd (_, ch) -> Or (fresh_formula_uid (), List.map (transform pol) ch)
+          | AIGLit b -> Lit b
+          | AIGVar v -> Var (fresh_formula_uid (), v)
+          | AIGNot t -> Not (fresh_formula_uid (), transform t)
+          | AIGAnd (_, u, v) -> And (fresh_formula_uid (), [ transform u; transform v ])
         in
-        Hashtbl.replace mem (pol, s) res;
+        Hashtbl.replace mem s res;
         res
   in
+  transform s
+
+(*
+  Computes the negative normal form of formula [s].
+*)
+
+let negative_normal_form s =
+  Printf.printf "transforming formula to NNF\n%!";
+  let mem = Hashtbl.create 8 in
+  let rec transform pol s =
+    let uid = formula_uid s in
+    match Hashtbl.find_opt mem uid with
+    | Some nnf -> nnf
+    | None ->
+        let r =
+          match s with
+          | Lit b -> Lit (b = pol)
+          | Var _ -> s
+          | Not (_, Var _) -> s
+          | Not (_, t) -> transform (not pol) t
+          | And (_, ch) when pol -> And (fresh_formula_uid (), List.map (transform pol) ch)
+          | And (_, ch) -> Or (fresh_formula_uid (), List.map (transform pol) ch)
+          | Or (_, ch) when pol -> Or (fresh_formula_uid (), List.map (transform pol) ch)
+          | Or (_, ch) -> And (fresh_formula_uid (), List.map (transform pol) ch)
+        in
+        Hashtbl.replace mem uid r;
+        r
+  in
   transform true s
+
+(*
+  Unfolds the formula, building a formula whose operators
+  And and Or admit at most 2 sub formulas.
+*)
+
+let unfold_formula s =
+  let mem = Hashtbl.create 8 in
+  let rec transform s =
+    let uid = formula_uid s in
+    match Hashtbl.find_opt mem uid with
+    | Some t -> t
+    | None ->
+        let r =
+          match s with
+          | Not (_, t) -> Not (fresh_formula_uid (), transform t)
+          | And (_, ch) when List.length ch > 2 ->
+              let unfold_tl = transform (And (0, List.tl ch)) in
+              And (fresh_formula_uid (), [ List.hd ch; unfold_tl ])
+          | Or (_, ch) when List.length ch > 2 ->
+              let unfold_tl = transform (Or (0, List.tl ch)) in
+              Or (fresh_formula_uid (), [ List.hd ch; unfold_tl ])
+          | _ -> s
+        in
+        Hashtbl.replace mem uid r;
+        r
+  in
+  transform s
+
+(*
+  Converts formula to AIG formula. First ensures
+  that [s] is in NNF and that the operators
+  contain at most 2 children.
+*)
+
+let formula_to_aig_formula s =
+  (* let s = negative_normal_form s in *)
+  let s = unfold_formula s in
+
+  let mem = Hashtbl.create 8 in
+  let neg = Hashtbl.create 8 in
+
+  (*
+    [var_index] is the index of variable names
+    [int_index] is the index of intermediate varable names
+  *)
+  let vars = vars s in
+
+  let var_index = ref 0 in
+  let int_index = ref (Vars.cardinal vars) in
+
+  let rec transform s =
+    let uid = formula_uid s in
+    match Hashtbl.find_opt mem uid with
+    | Some t -> t
+    | None ->
+        let r =
+          match s with
+          | Lit b -> AIGLit b
+          | Var _ -> AIGVar (incr var_index)
+          | Not (_, t) -> AIGNot (transform t)
+          | And (_, [ u ]) -> transform u
+          | And (_, [ u; v ]) -> AIGAnd (incr int_index, transform u, transform v)
+          | Or _ -> AIGNot (transform (negate ~mem:neg s))
+          | _ ->
+              Printf.printf "%s\n%!" (show_formula s);
+              failwith "the formula cannot be translated to AIG formula"
+        in
+        Hashtbl.replace mem uid r;
+        r
+  in
+  transform s
