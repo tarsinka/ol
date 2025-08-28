@@ -1,0 +1,21 @@
+These are AIGER benchmarks obtained with 'smv2qbf' from the
+SMV models in the Tip-Suite.  These are structural SAT problems
+for k-induction.  Each SMV model is encoded for one induction
+depth with 5 different AIG simplifiers as described in:
+
+  R. Brummayer, A. Biere. Local Two-Level And-Inverter Graph Minimization
+  without Blowup. In Proc. 2nd Doctoral Workshop on Mathematical and
+  Engineering Methods in Computer Science (MEMICS'06), Mikulov, Czechia,
+  October 2006.
+
+Note the size of the AIGs is slightly different from the sizes reported in
+the paper since the tools and the format has changed slightly.
+
+More on the tools used to generate these benchmarks can be found at
+the following links:
+
+  http://fmv.jku.at/smv2qbf
+  http://fmv.jku.at/aiger
+  http://fmv.jku.at/papers
+
+Armin Biere, 20 December 2006.
