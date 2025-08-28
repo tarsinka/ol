@@ -42,6 +42,8 @@ let write filename s =
   let mem = Hashtbl.create 8 in
   let ind = Hashtbl.create 8 in
 
+  let intermediate_index = ref header.i in
+
   let rec go s =
     match Hashtbl.find_opt mem s with
     | Some x -> x
@@ -51,9 +53,13 @@ let write filename s =
           | AIGLit false -> 0
           | AIGLit true -> 1
           | AIGVar v -> 2 * v
-          | AIGAnd (k, u, v) ->
+          | AIGAnd (_, u, v) ->
               let var_u = go u in
               let var_v = go v in
+
+              let var_u, var_v = if var_u > var_v then var_u, var_v else var_v, var_u in
+
+              let k = incr intermediate_index in
 
               let lhs = 2 * k in
               let delta_a = lhs - var_u in
@@ -158,3 +164,20 @@ let parse filename =
   in
   ands hdr.a;
   hdr, List.map (fun x -> x, Hashtbl.find map x) outs
+
+let aig_formula_size s =
+  let mem = Hashtbl.create 8 in
+  let rec go s =
+    match Hashtbl.mem mem s with
+    | true -> 0
+    | _ ->
+        let size =
+          match s with
+          | AIGLit _ | AIGVar _ -> 1
+          | AIGNot t -> go t
+          | AIGAnd (_, u, v) -> 1 + go u + go v
+        in
+        Hashtbl.replace mem s size;
+        size
+  in
+  go s

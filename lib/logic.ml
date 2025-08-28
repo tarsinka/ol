@@ -42,6 +42,13 @@ let rec show_min_formula = function
       let sep = if pol then " & " else " | " in
       "(" ^ String.concat sep (List.map show_min_formula ch) ^ ")"
 
+let rec show_aig_formula = function
+  | AIGLit true -> "t"
+  | AIGLit false -> "f"
+  | AIGVar v -> string_of_int v
+  | AIGNot s -> "~" ^ show_aig_formula s
+  | AIGAnd (_, u, v) -> "(" ^ show_aig_formula u ^ " & " ^ show_aig_formula v ^ ")"
+
 let rec show_formula = function
   | Lit true -> "1"
   | Lit false -> "0"
@@ -49,6 +56,24 @@ let rec show_formula = function
   | Not (_, s) -> "~" ^ show_formula s
   | And (_, ch) -> "(" ^ String.concat " & " (List.map show_formula ch) ^ ")"
   | Or (_, ch) -> "(" ^ String.concat " | " (List.map show_formula ch) ^ ")"
+
+let formula_size s =
+  let mem = Hashtbl.create 8 in
+  let rec go s =
+    let uid = formula_uid s in
+    match Hashtbl.find_opt mem uid with
+    | Some _ -> 0
+    | None ->
+        let size =
+          match s with
+          | Lit _ | Var _ -> 1
+          | Not (_, t) -> go t
+          | And (_, ch) | Or (_, ch) -> 1 + List.fold_left (fun sum c -> sum + go c) 0 ch
+        in
+        Hashtbl.replace mem uid size;
+        size
+  in
+  go s
 
 (*
   Returns a list of the identifiers of variable occuring in
@@ -117,7 +142,6 @@ let flatten_and ch =
 *)
 
 let negate ?(mem = Hashtbl.create 8) s =
-  (* let mem = Hashtbl.create 8 in *)
   let rec transform s =
     let uid = formula_uid s in
     match Hashtbl.find_opt mem uid with
@@ -295,14 +319,16 @@ let unfold_formula s =
     | None ->
         let r =
           match s with
+          | Lit _ | Var _ -> s
           | Not (_, t) -> Not (fresh_formula_uid (), transform t)
-          | And (_, ch) when List.length ch > 2 ->
-              let unfold_tl = transform (And (0, List.tl ch)) in
-              And (fresh_formula_uid (), [ List.hd ch; unfold_tl ])
-          | Or (_, ch) when List.length ch > 2 ->
-              let unfold_tl = transform (Or (0, List.tl ch)) in
-              Or (fresh_formula_uid (), [ List.hd ch; unfold_tl ])
-          | _ -> s
+          | And (_, hd :: tl) when List.length tl > 1 ->
+              let unfold_tl = transform (And (fresh_formula_uid (), tl)) in
+              And (fresh_formula_uid (), [ transform hd; unfold_tl ])
+          | Or (_, hd :: tl) when List.length tl > 1 ->
+              let unfold_tl = transform (Or (fresh_formula_uid (), tl)) in
+              Or (fresh_formula_uid (), [ transform hd; unfold_tl ])
+          | And (_, ch) -> And (fresh_formula_uid (), List.map transform ch)
+          | Or (_, ch) -> Or (fresh_formula_uid (), List.map transform ch)
         in
         Hashtbl.replace mem uid r;
         r
@@ -316,8 +342,12 @@ let unfold_formula s =
 *)
 
 let formula_to_aig_formula s =
-  (* let s = negative_normal_form s in *)
+
+  let pre_size_s = formula_size s in
   let s = unfold_formula s in
+
+  let post_size_s = formula_size s in
+  Printf.printf "%d %d\n%!" pre_size_s post_size_s;
 
   let mem = Hashtbl.create 8 in
   let neg = Hashtbl.create 8 in
@@ -331,6 +361,8 @@ let formula_to_aig_formula s =
   let var_index = ref 0 in
   let int_index = ref (Vars.cardinal vars) in
 
+  let var_map = Hashtbl.create 8 in
+
   let rec transform s =
     let uid = formula_uid s in
     match Hashtbl.find_opt mem uid with
@@ -339,14 +371,16 @@ let formula_to_aig_formula s =
         let r =
           match s with
           | Lit b -> AIGLit b
-          | Var _ -> AIGVar (incr var_index)
-          | Not (_, t) -> AIGNot (transform t)
+          | Var (_, v) ->
+              if Hashtbl.mem var_map v then Hashtbl.find mem (Hashtbl.find var_map v)
+              else (
+                Hashtbl.replace var_map v uid;
+                AIGVar (incr var_index))
+          | Not (_, t) -> ( match transform t with AIGNot t -> t | tr -> AIGNot tr)
           | And (_, [ u ]) -> transform u
           | And (_, [ u; v ]) -> AIGAnd (incr int_index, transform u, transform v)
           | Or _ -> AIGNot (transform (negate ~mem:neg s))
-          | _ ->
-              Printf.printf "%s\n%!" (show_formula s);
-              failwith "the formula cannot be translated to AIG formula"
+          | _ -> failwith "the formula cannot be translated to an AIG formula"
         in
         Hashtbl.replace mem uid r;
         r
