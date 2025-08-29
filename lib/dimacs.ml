@@ -2,12 +2,12 @@ open Logic
 
 let write filename (cnf : cnf_formula) =
   let out_ch = open_out filename in
-  Printf.fprintf out_ch "p cnf %d %d\n" cnf.amount_vars cnf.amount_clauses;
+  Printf.fprintf out_ch "p cnf %d %d\n%!" cnf.amount_vars cnf.amount_clauses;
 
   List.iter
     (fun cl ->
       let line = String.concat " " (List.map string_of_int cl) ^ " 0" in
-      Printf.fprintf out_ch "%s\n" line)
+      Printf.fprintf out_ch "%s\n%!" line)
     cnf.clauses
 
 let read fn =

@@ -32,6 +32,25 @@ let get_olnf_formula_uid s =
   let s_fg = fingerprint_min_formula s in
   s_fg.uid
 
+let reset () = olnf_uid := 0
+
+let olnf_formula_size s =
+  let mem = Hashtbl.create 8 in
+  let rec go s =
+    let uid = get_olnf_formula_uid s in
+    match Hashtbl.mem mem uid with
+    | true -> 0
+    | _ ->
+        let size =
+          match s with
+          | MLit _ | MVar _ -> 1
+          | MAnd (_, ch, _) -> 1 + List.fold_left (fun sum c -> sum + go c) 0 ch
+        in
+        Hashtbl.replace mem uid size;
+        size
+  in
+  go s
+
 let inverse s =
   let fg = fingerprint_min_formula s in
   match fg.inv with
@@ -188,3 +207,36 @@ let rec olnf s =
       in
       fg.nrm <- Some nrm;
       nrm
+
+let benchmark root =
+  let circuits = Sys.readdir (root ^ "/aig") in
+  Printf.printf "[olnf] benchmarking over %s\n%!" root;
+  Array.iter
+    (fun cn ->
+      reset ();
+      Logic.reset ();
+
+      let fn = root ^ "/aig/" ^ cn in
+
+      let _, aigs = Aiger.parse fn in
+      let _, aig = List.nth aigs 0 in
+      let mn = aig_formula_to_olnf_formula aig in
+      let fm = olnf_formula_to_formula mn in
+
+      let cnf_cl = cnf_formula_to_clauses (cnf fm) in
+
+      let time = Sys.time () in
+      let normal_form = olnf mn in
+      let delta_time = Sys.time () -. time in
+
+      let normal_form_fm = olnf_formula_to_formula normal_form in
+      let cnf_ol = cnf_formula_to_clauses (cnf normal_form_fm) in
+
+      let cnf_path = root ^ "/cnf" in
+
+      Dimacs.write (cnf_path ^ "/" ^ cn ^ "_cl.cnf") cnf_cl;
+      Dimacs.write (cnf_path ^ "/" ^ cn ^ "_ol.cnf") cnf_ol;
+
+      Printf.printf "%s\t%d\t%d\t%f\n%!" cn (formula_size fm)
+        (formula_size normal_form_fm) delta_time)
+    circuits

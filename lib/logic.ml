@@ -26,6 +26,7 @@ let incr x =
 
 let formula_uid = ref 0
 let fresh_formula_uid () = incr formula_uid
+let reset () = formula_uid := 0
 
 let formula_uid = function
   | Lit true -> -1
@@ -161,6 +162,63 @@ let negate ?(mem = Hashtbl.create 8) s =
   transform s
 
 (*
+  Computes the negative normal form of formula [s].
+*)
+
+let negative_normal_form s =
+  let mem = Hashtbl.create 8 in
+  let rec transform pol s =
+    let uid = formula_uid s in
+    match Hashtbl.find_opt mem uid with
+    | Some nnf -> nnf
+    | None ->
+        let r =
+          match s with
+          | Lit b -> Lit (b = pol)
+          | Var _ -> s
+          | Not (_, Var _) -> s
+          | Not (_, t) -> transform (not pol) t
+          | And (_, ch) when pol -> And (fresh_formula_uid (), List.map (transform pol) ch)
+          | And (_, ch) -> Or (fresh_formula_uid (), List.map (transform pol) ch)
+          | Or (_, ch) when pol -> Or (fresh_formula_uid (), List.map (transform pol) ch)
+          | Or (_, ch) -> And (fresh_formula_uid (), List.map (transform pol) ch)
+        in
+        Hashtbl.replace mem uid r;
+        r
+  in
+  transform true s
+
+(*
+  Unfolds the formula, building a formula whose operators
+  And and Or admit at most 2 sub formulas.
+*)
+
+let unfold_formula s =
+  let mem = Hashtbl.create 8 in
+  let rec transform s =
+    let uid = formula_uid s in
+    match Hashtbl.find_opt mem uid with
+    | Some t -> t
+    | None ->
+        let r =
+          match s with
+          | Lit _ | Var _ -> s
+          | Not (_, t) -> Not (fresh_formula_uid (), transform t)
+          | And (_, hd :: tl) when List.length tl > 1 ->
+              let unfold_tl = transform (And (fresh_formula_uid (), tl)) in
+              And (fresh_formula_uid (), [ transform hd; unfold_tl ])
+          | Or (_, hd :: tl) when List.length tl > 1 ->
+              let unfold_tl = transform (Or (fresh_formula_uid (), tl)) in
+              Or (fresh_formula_uid (), [ transform hd; unfold_tl ])
+          | And (_, ch) -> And (fresh_formula_uid (), List.map transform ch)
+          | Or (_, ch) -> Or (fresh_formula_uid (), List.map transform ch)
+        in
+        Hashtbl.replace mem uid r;
+        r
+  in
+  transform s
+
+(*
   Transformation to conjunctive normal form (CNF)
   using the Tseitin transformation.
 *)
@@ -180,7 +238,7 @@ let cnf s =
     let sup_var = Vars.max_elt vrs in
     key_binding := sup_var;
 
-    Printf.printf "sup %d\n%!" sup_var;
+    Printf.printf "sup %d\n%!" !key_binding;
 
     let rec bind s =
       let uid = formula_uid s in
@@ -215,10 +273,8 @@ let cnf s =
         (fun k v acc ->
           let var_k = Var (fresh_formula_uid (), k) in
           let left_imp = Or (fresh_formula_uid (), [ negate var_k; v ]) in
-          let right_imp = Or (fresh_formula_uid (), [ negate v; var_k ]) in
           let left_imp_simpl = simpl left_imp in
-          let right_imp_simpl = simpl right_imp in
-          left_imp_simpl :: right_imp_simpl :: acc)
+          left_imp_simpl :: acc)
         binding [ root ]
     in
     And (fresh_formula_uid (), flatten_and and_ch)
@@ -278,76 +334,13 @@ let aig_formula_to_formula s =
   transform s
 
 (*
-  Computes the negative normal form of formula [s].
-*)
-
-let negative_normal_form s =
-  Printf.printf "transforming formula to NNF\n%!";
-  let mem = Hashtbl.create 8 in
-  let rec transform pol s =
-    let uid = formula_uid s in
-    match Hashtbl.find_opt mem uid with
-    | Some nnf -> nnf
-    | None ->
-        let r =
-          match s with
-          | Lit b -> Lit (b = pol)
-          | Var _ -> s
-          | Not (_, Var _) -> s
-          | Not (_, t) -> transform (not pol) t
-          | And (_, ch) when pol -> And (fresh_formula_uid (), List.map (transform pol) ch)
-          | And (_, ch) -> Or (fresh_formula_uid (), List.map (transform pol) ch)
-          | Or (_, ch) when pol -> Or (fresh_formula_uid (), List.map (transform pol) ch)
-          | Or (_, ch) -> And (fresh_formula_uid (), List.map (transform pol) ch)
-        in
-        Hashtbl.replace mem uid r;
-        r
-  in
-  transform true s
-
-(*
-  Unfolds the formula, building a formula whose operators
-  And and Or admit at most 2 sub formulas.
-*)
-
-let unfold_formula s =
-  let mem = Hashtbl.create 8 in
-  let rec transform s =
-    let uid = formula_uid s in
-    match Hashtbl.find_opt mem uid with
-    | Some t -> t
-    | None ->
-        let r =
-          match s with
-          | Lit _ | Var _ -> s
-          | Not (_, t) -> Not (fresh_formula_uid (), transform t)
-          | And (_, hd :: tl) when List.length tl > 1 ->
-              let unfold_tl = transform (And (fresh_formula_uid (), tl)) in
-              And (fresh_formula_uid (), [ transform hd; unfold_tl ])
-          | Or (_, hd :: tl) when List.length tl > 1 ->
-              let unfold_tl = transform (Or (fresh_formula_uid (), tl)) in
-              Or (fresh_formula_uid (), [ transform hd; unfold_tl ])
-          | And (_, ch) -> And (fresh_formula_uid (), List.map transform ch)
-          | Or (_, ch) -> Or (fresh_formula_uid (), List.map transform ch)
-        in
-        Hashtbl.replace mem uid r;
-        r
-  in
-  transform s
-
-(*
   Converts formula to AIG formula. First ensures
   that [s] is in NNF and that the operators
   contain at most 2 children.
 *)
 
 let formula_to_aig_formula s =
-
-  let pre_size_s = formula_size s in
   let s = unfold_formula s in
-
-  let post_size_s = formula_size s in
-  Printf.printf "%d %d\n%!" pre_size_s post_size_s;
 
   let mem = Hashtbl.create 8 in
   let neg = Hashtbl.create 8 in
