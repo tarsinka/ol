@@ -238,8 +238,6 @@ let cnf s =
     let sup_var = Vars.max_elt vrs in
     key_binding := sup_var;
 
-    Printf.printf "sup %d\n%!" !key_binding;
-
     let rec bind s =
       let uid = formula_uid s in
       match Hashtbl.find_opt formula_keys uid with

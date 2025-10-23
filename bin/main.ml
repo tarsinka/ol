@@ -26,10 +26,8 @@ let run_olnf_benchmarks () =
   List.iter (fun root -> Ol.Olnf.benchmark root) roots
 
 let run_olsc_benchmarks () =
-  let circuit_names = [ "benchmarks/epfl-circuits/multiplier.aig" ] in
-  Ol.Olsc.benchmark circuit_names Ol.Olsc.add
+  Ol.Olsc.benchmark [ "benchmarks/epfl-circuits/multiplier.aig" ]
 
 let () =
-  run_olnf_benchmarks ();
   run_olsc_benchmarks ();
-  ()
+  run_olnf_benchmarks ()

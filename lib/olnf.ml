@@ -192,9 +192,12 @@ let contradiction_check s =
   | MAnd (_, ch, true) -> List.exists (fun c -> lat_ord s (inverse c)) ch
   | _ -> false
 
-let rec olnf s =
+exception Timeout
+
+let rec olnf beg_time s =
   let fg = fingerprint_min_formula s in
   match fg.nrm with
+  | _ when Sys.time () -. beg_time > 1000. -> raise Timeout
   | Some nf -> nf
   | None ->
       let nrm =
@@ -202,7 +205,7 @@ let rec olnf s =
         | MLit _ -> s
         | MVar (_, vn, pol) -> MVar (fresh_olnf_finger_print (), vn, pol)
         | MAnd (_, ch, pol) ->
-            let simp = simplify (List.map olnf ch) pol in
+            let simp = simplify (List.map (olnf beg_time) ch) pol in
             if contradiction_check simp then MLit (not pol) else simp
       in
       fg.nrm <- Some nrm;
@@ -225,18 +228,20 @@ let benchmark root =
 
       let cnf_cl = cnf_formula_to_clauses (cnf fm) in
 
-      let time = Sys.time () in
-      let normal_form = olnf mn in
-      let delta_time = Sys.time () -. time in
+      try
+        let time = Sys.time () in
+        let normal_form = olnf time mn in
+        let delta_time = Sys.time () -. time in
 
-      let normal_form_fm = olnf_formula_to_formula normal_form in
-      let cnf_ol = cnf_formula_to_clauses (cnf normal_form_fm) in
+        let normal_form_fm = olnf_formula_to_formula normal_form in
+        let cnf_ol = cnf_formula_to_clauses (cnf normal_form_fm) in
 
-      let cnf_path = root ^ "/cnf" in
+        let cnf_path = root ^ "/cnf" in
 
-      Dimacs.write (cnf_path ^ "/" ^ cn ^ "_cl.cnf") cnf_cl;
-      Dimacs.write (cnf_path ^ "/" ^ cn ^ "_ol.cnf") cnf_ol;
+        Dimacs.write (cnf_path ^ "/" ^ cn ^ "_cl.cnf") cnf_cl;
+        Dimacs.write (cnf_path ^ "/" ^ cn ^ "_ol.cnf") cnf_ol;
 
-      Printf.printf "%s\t%d\t%d\t%f\n%!" cn (formula_size fm)
-        (formula_size normal_form_fm) delta_time)
+        Printf.printf "%s\t%d\t%d\t%f\n%!" cn (formula_size fm)
+          (formula_size normal_form_fm) delta_time
+      with Timeout -> Printf.printf "%s has timed-out\n%!" cn)
     circuits
